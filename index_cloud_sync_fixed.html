@@ -1,0 +1,2005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trading Journal Dashboard</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN & DataLabels Plugin -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <!-- Supabase JS Client CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+            }
+          },
+          boxShadow: {
+            'card': '0 2px 14px rgba(0, 0, 0, 0.04)',
+            'card-hover': '0 8px 24px rgba(0, 0, 0, 0.08)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #f1f4f9;
+      color: #1e293b;
+    }
+    .gauge-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 270px;
+      margin: 0 auto;
+    }
+    .modal-backdrop {
+      background-color: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(4px);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+
+  <!-- Main Container -->
+  <div class="max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex-1 flex flex-col gap-6">
+
+    <!-- TOP HEADER -->
+    <header class="bg-white rounded-2xl p-4 sm:px-6 sm:py-4 shadow-card flex flex-wrap items-center justify-between gap-4">
+      
+      <!-- Brand & Tabs -->
+      <div class="flex items-center gap-6 sm:gap-8 flex-wrap">
+        <div class="flex items-center">
+          <img src="logo.png" alt="Qisar Research" class="h-10 sm:h-11 w-auto object-contain hover:opacity-95 transition" />
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="flex items-center bg-slate-100 p-1 rounded-xl">
+          <button id="tabDashboardBtn" onclick="switchTab('dashboard')" class="px-5 py-2 text-sm font-semibold rounded-lg bg-slate-900 text-white transition-all shadow-sm">
+            Dashboard
+          </button>
+          <button id="tabTradeDataBtn" onclick="switchTab('tradeData')" class="px-5 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5">
+            Trade data
+            <span id="navHoldingsCountBadge" class="hidden text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-bold">0</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Right Header Actions -->
+      <div class="flex items-center gap-3 ml-auto">
+        <!-- Cloud Sync Status Pill -->
+        <button onclick="openCloudSyncModal()" id="cloudStatusBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition" title="Cloud Database Sync Status">
+          <span id="cloudStatusDot" class="w-2 h-2 rounded-full bg-slate-400"></span>
+          <span id="cloudStatusText">Offline (Local)</span>
+        </button>
+
+        <button onclick="refreshData()" class="w-9 h-9 rounded-full bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 flex items-center justify-center transition" title="Refresh Live Calculations">
+          <i data-lucide="rotate-cw" class="w-4 h-4"></i>
+        </button>
+
+        <button onclick="openBackupModal()" class="w-9 h-9 rounded-full bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 flex items-center justify-center transition" title="Backup & Restore Data">
+          <i data-lucide="database" class="w-4 h-4"></i>
+        </button>
+
+        <button onclick="openSettingsModal()" class="w-9 h-9 rounded-full bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 flex items-center justify-center transition" title="Initial Capital & Settings">
+          <i data-lucide="settings" class="w-4 h-4"></i>
+        </button>
+
+        <div class="flex items-center gap-2.5 pl-2 border-l border-slate-200">
+          <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center font-bold text-xs ring-2 ring-blue-500/20">
+            TJ
+          </div>
+          <span id="userName" class="text-sm font-semibold text-slate-800">My Trading Desk</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- SUB-BAR: Filters & Actions -->
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <h2 id="pageHeading" class="text-xl font-bold text-slate-800">Trading Overview (INR)</h2>
+        <p class="text-xs text-slate-500" id="subHeadingText">Auto-calculated live from your trade logs & active holdings</p>
+      </div>
+
+      <div class="flex items-center gap-2.5 flex-wrap">
+        <!-- Time Range Dropdown -->
+        <div class="relative">
+          <select id="timeFilter" onchange="handleTimeFilterChange()" class="appearance-none bg-white border border-slate-200 text-slate-700 text-xs font-semibold py-2.5 pl-3.5 pr-8 rounded-xl shadow-card focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+            <option value="all_time">All Time</option>
+            <option value="this_month">This Month</option>
+            <option value="last_month">Last Month</option>
+            <option value="this_year">This Year</option>
+          </select>
+          <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-2.5 top-3 pointer-events-none"></i>
+        </div>
+
+        <!-- Cloud Sync Action Button -->
+        <button onclick="openCloudSyncModal()" class="flex items-center gap-1.5 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-700 text-xs font-bold py-2.5 px-3.5 rounded-xl transition">
+          <i data-lucide="cloud" class="w-4 h-4"></i>
+          Connect Cloud (Anywhere Sync)
+        </button>
+
+        <!-- Backup / Sync Button -->
+        <button onclick="openBackupModal()" class="flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold py-2.5 px-3.5 rounded-xl shadow-card transition">
+          <i data-lucide="hard-drive-download" class="w-4 h-4 text-blue-600"></i>
+          Backup File
+        </button>
+
+        <!-- Export CSV Button -->
+        <button onclick="exportTradesCSV()" class="flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold py-2.5 px-3.5 rounded-xl shadow-card transition">
+          <i data-lucide="upload" class="w-4 h-4 text-slate-500"></i>
+          Export CSV
+        </button>
+
+        <!-- Add Trade Button -->
+        <button onclick="openAddTradeModal()" class="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2.5 px-4 rounded-xl shadow-sm transition">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          Add Trade / Holding
+        </button>
+      </div>
+    </div>
+
+    <!-- ================= PAGE 1: DASHBOARD VIEW ================= -->
+    <main id="dashboardView" class="flex flex-col gap-6">
+
+      <!-- TOP METRICS ROW (4 Cards) -->
+      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        
+        <!-- CARD 1: Total Capital (Vibrant Blue Card) -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-2xl p-5 shadow-card flex flex-col justify-between min-h-[135px]">
+          <div class="absolute -right-4 -bottom-6 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-blue-100/90" id="card1Title">Total Capital (Investment)</span>
+            <button onclick="openSettingsModal()" class="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition" title="Change Initial Capital">
+              <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+          <div>
+            <div class="text-3xl font-extrabold tracking-tight" id="totalCapitalVal">₹0</div>
+            <div class="text-xs text-blue-100/80 mt-1 flex items-center justify-between">
+              <span>Initial Capital Base</span>
+              <span id="openHoldingsBadge" class="text-[11px] bg-white/25 hover:bg-white/35 px-2 py-0.5 rounded font-bold cursor-pointer transition" onclick="scrollToHoldings()">0 Holdings</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 2: Current month Return -->
+        <div class="bg-white rounded-2xl p-5 shadow-card flex flex-col justify-between min-h-[135px] border border-slate-100">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-500" id="card2Title">Current month Return</span>
+            <span id="currMonthBadge" class="inline-flex items-center gap-0.5 text-xs font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
+              <span id="currMonthReturnPct">0.0%</span>
+            </span>
+          </div>
+          <div>
+            <div class="text-3xl font-extrabold text-slate-900" id="currMonthReturnVal">₹0</div>
+            <div class="text-xs text-slate-500 mt-1">
+              No of Trade: <span class="font-semibold text-slate-700" id="currMonthTradesCount">0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 3: Till Date Return -->
+        <div class="bg-white rounded-2xl p-5 shadow-card flex flex-col justify-between min-h-[135px] border border-slate-100">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-500" id="card3Title">Till Date Return</span>
+            <span id="tillDateBadge" class="inline-flex items-center gap-0.5 text-xs font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
+              <span id="tillDateReturnPct">0.0%</span>
+            </span>
+          </div>
+          <div>
+            <div class="text-3xl font-extrabold text-slate-900" id="tillDateReturnVal">₹0</div>
+            <div class="text-xs text-slate-500 mt-1">
+              No of Trade: <span class="font-semibold text-slate-700" id="tillDateTradesCount">0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 4: Total Value -->
+        <div class="bg-white rounded-2xl p-5 shadow-card flex flex-col justify-between min-h-[135px] border border-slate-100">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-500" id="card4Title">Total Portfolio Value</span>
+            <span class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">
+              ₹
+            </span>
+          </div>
+          <div>
+            <div class="text-3xl font-extrabold text-slate-900" id="totalPortfolioVal">₹0</div>
+            <div class="text-xs text-slate-500 mt-1 flex items-center justify-between">
+              <span>Realized: <b class="text-slate-700" id="totalNetPnlText">₹0</b></span>
+              <span id="unrealizedPnlText" class="text-[11px] text-slate-400">Holdings: ₹0</span>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- DEDICATED ACTIVE HOLDINGS SECTION (DASHBOARD WIDGET) -->
+      <section id="activeHoldingsDashboardSection" class="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 text-white rounded-2xl p-5 shadow-card relative overflow-hidden">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+          <div class="flex items-center gap-3">
+            <span class="w-9 h-9 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center font-bold text-sm border border-purple-400/30">
+              <i data-lucide="layers" class="w-5 h-5"></i>
+            </span>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-base font-bold text-white tracking-tight">Active Stock Holdings (Open Positions)</h3>
+                <span id="dashboardHoldingsCountPill" class="text-xs font-extrabold bg-purple-500 text-white px-2 py-0.5 rounded-full">0 Open</span>
+              </div>
+              <p class="text-xs text-purple-200/80">Stocks currently held in portfolio with live floating P&L</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button onclick="openAddTradeModal()" class="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold py-2 px-3.5 rounded-xl shadow-sm transition">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              Add New Holding
+            </button>
+          </div>
+        </div>
+
+        <!-- Holdings Cards Grid / Empty State -->
+        <div id="activeHoldingsListContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+          <!-- Dynamically Rendered -->
+        </div>
+      </section>
+
+      <!-- MIDDLE ROW: Performance Overview (Single Stacked Candle: Net Profit + Brokerage/Tax) & CAGR -->
+      <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Left (2 cols): Performance Overview with Single Stacked Candle -->
+        <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-card border border-slate-100 flex flex-col justify-between min-h-[340px]">
+          <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+            <div>
+              <h3 class="text-base font-bold text-slate-900" id="perfOverviewTitle">Performance Overview</h3>
+              <p class="text-xs text-slate-400">Single candle showing Net Profit (Green/Rose) stacked with Brokerage & Tax (Amber/Orange)</p>
+            </div>
+            
+            <!-- Clear Legend matching sketch -->
+            <div class="flex items-center gap-3.5 text-xs font-semibold flex-wrap">
+              <span class="flex items-center gap-1.5 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
+                <span class="w-3 h-3 rounded bg-emerald-500"></span> Net Profit
+              </span>
+              <span class="flex items-center gap-1.5 text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md">
+                <span class="w-3 h-3 rounded bg-amber-500"></span> Brokerage / Tax
+              </span>
+              <span class="flex items-center gap-1.5 text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md">
+                <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span> = Total Gross
+              </span>
+            </div>
+          </div>
+
+          <!-- Chart Area / Empty State -->
+          <div class="relative h-64 w-full flex items-center justify-center">
+            <canvas id="performanceBarChart"></canvas>
+            <div id="perfEmptyState" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-white/90 text-center p-4">
+              <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-2">
+                <i data-lucide="bar-chart-2" class="w-6 h-6"></i>
+              </div>
+              <p class="text-sm font-bold text-slate-700">No Monthly Trades Yet</p>
+              <p class="text-xs text-slate-400 max-w-xs mt-0.5">Click "Add Trade / Holding" button above to log your trades and see single stacked profit candles automatically!</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right (1 col): CAGR Speedometer Gauge with Nifty 50 Index comparison -->
+        <div class="bg-white rounded-2xl p-6 shadow-card border border-slate-100 flex flex-col justify-between min-h-[340px]">
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <h3 class="text-base font-bold text-slate-900" id="cagrTitle">CAGR vs Nifty 50</h3>
+              <p class="text-[11px] text-slate-400">Auto-calculated from Total Capital to Current Value</p>
+            </div>
+            <button onclick="openSettingsModal()" class="text-slate-400 hover:text-slate-600" title="Edit Initial Capital">
+              <i data-lucide="sliders" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <!-- Dual Gauge Canvas -->
+          <div class="my-auto flex flex-col items-center justify-center py-1">
+            <div class="gauge-wrapper relative flex flex-col items-center justify-center">
+              <canvas id="gaugeCanvas" width="260" height="145" class="mx-auto"></canvas>
+              <div class="absolute bottom-2 text-center">
+                <div class="text-2xl font-black text-blue-600" id="cagrValue">0.0%</div>
+                <div class="text-[11px] text-slate-500 font-semibold flex items-center justify-center gap-1.5 mt-0.5">
+                  <span class="w-2 h-2 rounded-full bg-blue-600"></span> You: <b id="cagrTextBadge">0.0%</b> 
+                  <span class="text-slate-300">|</span> 
+                  <span class="w-2 h-2 rounded-full bg-amber-500"></span> Nifty: <b>14.2%</b>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 1 Year & 3 Years sub-cards comparing My CAGR vs Nifty 50 -->
+          <div class="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-slate-100 text-xs">
+            <div class="bg-slate-50 rounded-xl p-2.5 text-center border border-slate-100">
+              <div class="text-[11px] text-slate-500 font-semibold">1 Year Return</div>
+              <div class="text-sm font-extrabold text-blue-600 mt-0.5" id="cagr1Yr">0.0%</div>
+              <div class="text-[10px] text-slate-400 mt-0.5">Nifty 50: <span class="font-bold text-slate-600">14.2%</span></div>
+            </div>
+            <div class="bg-slate-50 rounded-xl p-2.5 text-center border border-slate-100">
+              <div class="text-[11px] text-slate-500 font-semibold">3 Years CAGR</div>
+              <div class="text-sm font-extrabold text-blue-600 mt-0.5" id="cagr3Yr">0.0%</div>
+              <div class="text-[10px] text-slate-400 mt-0.5">Nifty 50: <span class="font-bold text-slate-600">15.8%</span></div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- BOTTOM ROW: Time Wise Value (Equity Curve grouped by UNIQUE DATE with combined day P&L) -->
+      <section class="bg-white rounded-2xl p-6 shadow-card border border-slate-100">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <div>
+            <h3 class="text-base font-bold text-slate-900" id="timeWiseTitle">Time wise value (₹)</h3>
+            <p class="text-xs text-slate-400">Unique date-wise equity curve with combined multi-trade daily calculations</p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+              Date-wise Equity Curve
+            </span>
+          </div>
+        </div>
+
+        <div class="relative h-72 w-full pt-4 flex items-center justify-center">
+          <canvas id="timeWiseLineChart"></canvas>
+          <div id="timeWiseEmptyState" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-white/90 text-center p-4">
+            <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-2">
+              <i data-lucide="trending-up" class="w-6 h-6"></i>
+            </div>
+            <p class="text-sm font-bold text-slate-700">Equity Curve Awaiting Data</p>
+            <p class="text-xs text-slate-400 max-w-xs mt-0.5">As you log trades in Trade Data, this chart will plot your daily end-of-day equity balance with milestone points!</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ================= PAGE 2: TRADE DATA VIEW ================= -->
+    <section id="tradeDataView" class="hidden flex flex-col gap-6">
+      
+      <!-- Table Controls -->
+      <div class="bg-white rounded-2xl p-5 shadow-card border border-slate-100 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3 flex-1 min-w-[240px]">
+          <div class="relative flex-1 max-w-xs">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none"></i>
+            <input type="text" id="tradeSearchInput" oninput="filterTradesTable()" placeholder="Search symbol, strategy..." class="w-full pl-9 pr-4 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+          </div>
+
+          <select id="statusFilterSelect" onchange="filterTradesTable()" class="bg-slate-50 border border-slate-200 text-slate-700 text-xs py-2 px-3 rounded-xl focus:outline-none">
+            <option value="ALL">All Trades & Holdings</option>
+            <option value="HOLDING">🟣 Active Holdings Only</option>
+            <option value="WIN">🟢 Wins (Closed)</option>
+            <option value="LOSS">🔴 Losses (Closed)</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <span class="text-xs text-slate-500 font-medium">Total: <b id="totalTradesCountBadge" class="text-slate-800">0</b> (<span id="holdingsCountBadge" class="text-purple-600 font-semibold">0 Holding</span>)</span>
+          <button onclick="openAddTradeModal()" class="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 px-3.5 rounded-xl shadow-sm transition">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            New Entry / Holding
+          </button>
+        </div>
+      </div>
+
+      <!-- Trade Log Data Table -->
+      <div class="bg-white rounded-2xl shadow-card border border-slate-100 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-600">
+            <thead class="bg-slate-50/80 text-slate-500 uppercase font-semibold border-b border-slate-100">
+              <tr>
+                <th class="py-3.5 px-4">Date</th>
+                <th class="py-3.5 px-4">Symbol</th>
+                <th class="py-3.5 px-4">Type</th>
+                <th class="py-3.5 px-4">Entry (₹)</th>
+                <th class="py-3.5 px-4">Exit / CMP (₹)</th>
+                <th class="py-3.5 px-4">Qty</th>
+                <th class="py-3.5 px-4">Brokerage / Tax (₹)</th>
+                <th class="py-3.5 px-4">Net P&L (₹)</th>
+                <th class="py-3.5 px-4">Return %</th>
+                <th class="py-3.5 px-4">Strategy / Note</th>
+                <th class="py-3.5 px-4">Status</th>
+                <th class="py-3.5 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tradesTableBody" class="divide-y divide-slate-100">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <!-- CLOUD SYNC CONFIG MODAL (SUPABASE 100% FREE SETUP) -->
+  <div id="cloudSyncModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+        <div class="flex items-center gap-2">
+          <span class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+            <i data-lucide="cloud" class="w-5 h-5"></i>
+          </span>
+          <div>
+            <h3 class="text-base font-bold text-slate-900">Cloud Database (Real-Time Multi-Device Sync)</h3>
+            <p class="text-xs text-slate-400">Sync data between Laptop, Mobile & GitHub</p>
+          </div>
+        </div>
+        <button onclick="closeCloudSyncModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleSaveCloudConfig(event)" class="flex flex-col gap-3.5 text-xs">
+        
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <p class="text-[11px] text-slate-600 leading-relaxed">
+            <b>1. Free Supabase Account:</b> Go to <a href="https://supabase.com" target="_blank" class="text-blue-600 font-bold underline">supabase.com</a> and create a free project.<br/>
+            <b>2. Paste API Keys:</b> In Project Settings ➔ API, copy your <b>Project URL</b> and <b>Anon Public Key</b> and paste below.
+          </p>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Supabase Project URL</label>
+          <input type="url" id="cloudSupabaseUrl" placeholder="https://xyzcompany.supabase.co" class="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Supabase Anon Public API Key</label>
+          <input type="text" id="cloudSupabaseKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." class="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono text-[11px]" />
+        </div>
+
+        <div class="flex items-center justify-between pt-3 border-t border-slate-100">
+          <button type="button" onclick="disconnectCloud()" class="px-3 py-2 rounded-xl text-rose-600 hover:bg-rose-50 font-semibold transition text-xs">Disconnect Cloud</button>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="closeCloudSyncModal()" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-semibold transition">Cancel</button>
+            <button type="submit" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-sm transition">Save & Sync Now</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- BACKUP & RESTORE MODAL -->
+  <div id="backupModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Backup & Restore Trade Journal</h3>
+          <p class="text-xs text-slate-400">Export your data to a file or restore on GitHub/Mobile</p>
+        </div>
+        <button onclick="closeBackupModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="flex flex-col gap-4 text-xs">
+        <div class="bg-blue-50/60 p-3.5 rounded-xl border border-blue-100 flex flex-col gap-2">
+          <span class="font-bold text-blue-900 flex items-center gap-1.5">
+            <i data-lucide="download" class="w-4 h-4 text-blue-600"></i>
+            Step 1: Download Complete Backup (.json)
+          </span>
+          <p class="text-slate-500 text-[11px]">Download all your trades, holdings, and starting capital as a single backup file.</p>
+          <button onclick="exportJSONBackup()" class="mt-1 w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold flex items-center justify-center gap-1.5 transition shadow-sm">
+            <i data-lucide="file-down" class="w-4 h-4"></i>
+            Download Backup File (.json)
+          </button>
+        </div>
+
+        <div class="bg-purple-50/60 p-3.5 rounded-xl border border-purple-100 flex flex-col gap-2">
+          <span class="font-bold text-purple-900 flex items-center gap-1.5">
+            <i data-lucide="upload" class="w-4 h-4 text-purple-600"></i>
+            Step 2: Restore / Upload Backup File
+          </span>
+          <p class="text-slate-500 text-[11px]">When you open your live GitHub / Netlify URL, click here and upload your downloaded backup file to load all your data instantly!</p>
+          <input type="file" id="importJsonFileInput" accept=".json" onchange="handleImportJSON(event)" class="hidden" />
+          <button onclick="document.getElementById('importJsonFileInput').click()" class="mt-1 w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold flex items-center justify-center gap-1.5 transition shadow-sm">
+            <i data-lucide="file-up" class="w-4 h-4"></i>
+            Select & Restore Backup File
+          </button>
+        </div>
+
+        <div class="flex items-center justify-end pt-2">
+          <button type="button" onclick="closeBackupModal()" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-semibold transition">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD / EDIT TRADE MODAL -->
+  <div id="addTradeModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 transform transition-all">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+        <div>
+          <h3 class="text-base font-bold text-slate-900" id="modalTradeTitle">Add New Trade / Holding</h3>
+          <p class="text-xs text-slate-400">Log an exited trade or currently active holding position</p>
+        </div>
+        <button onclick="closeAddTradeModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="tradeForm" onsubmit="handleSaveTrade(event)" class="flex flex-col gap-4 text-xs">
+        <input type="hidden" id="editTradeId" value="" />
+        
+        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+          <label class="block font-bold text-slate-800 mb-1.5">Trade Position Status:</label>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 bg-white cursor-pointer hover:border-purple-400 transition" id="labelHolding">
+              <input type="radio" name="tradePositionStatus" value="HOLDING" onchange="toggleHoldingMode(true)" class="text-purple-600 focus:ring-purple-500" />
+              <div>
+                <span class="font-bold text-purple-700 flex items-center gap-1">🟣 OPEN / HOLDING</span>
+                <span class="text-[10px] text-slate-400 block">Currently holding stock in portfolio</span>
+              </div>
+            </label>
+
+            <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 bg-white cursor-pointer hover:border-blue-400 transition" id="labelClosed">
+              <input type="radio" name="tradePositionStatus" value="CLOSED" checked onchange="toggleHoldingMode(false)" class="text-blue-600 focus:ring-blue-500" />
+              <div>
+                <span class="font-bold text-slate-800 flex items-center gap-1">🟢 CLOSED / EXITED</span>
+                <span class="text-[10px] text-slate-400 block">Trade completed (Sold / Booked)</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Buy / Entry Date</label>
+            <input type="date" id="tradeDate" required class="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Symbol / Stock Name</label>
+            <input type="text" id="tradeSymbol" placeholder="e.g. RELIANCE, TATA MOTORS, NIFTY" required class="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none uppercase font-bold" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Type</label>
+            <select id="tradeType" class="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none font-semibold">
+              <option value="LONG">BUY (Delivery / Swing)</option>
+              <option value="SHORT">SELL (Short)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Buy Price (₹)</label>
+            <input type="number" step="any" id="tradeEntry" placeholder="0.00" required class="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+          </div>
+          <div id="exitPriceContainer">
+            <label class="block font-semibold text-slate-700 mb-1" id="exitPriceLabel">Sell / Exit Price (₹)</label>
+            <input type="number" step="any" id="tradeExit" placeholder="0.00" class="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Quantity / Shares</label>
+            <input type="number" id="tradeQty" value="1" min="1" step="any" required class="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1 text-amber-700">Brokerage / Tax (₹)</label>
+            <input type="number" id="tradeCharges" value="0" min="0" step="any" placeholder="15" class="w-full p-2.5 border border-amber-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none bg-amber-50/40 font-semibold" />
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Strategy / Setup</label>
+            <input type="text" id="tradeStrategy" placeholder="e.g. Swing Hold, Breakout" class="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Trade Notes & Reasoning</label>
+          <textarea id="tradeNotes" rows="2" placeholder="Why did you buy? Target price, stoploss plan..." class="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeAddTradeModal()" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-semibold transition">Cancel</button>
+          <button type="submit" id="saveTradeBtn" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm transition">Save Trade</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- UPDATE CMP MODAL -->
+  <div id="updateCMPModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-100">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Update Current Price (CMP)</h3>
+          <p class="text-xs text-slate-400" id="updateCMPSymbolText">Stock CMP</p>
+        </div>
+        <button onclick="closeUpdateCMPModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleUpdateCMPSubmit(event)" class="flex flex-col gap-3 text-xs">
+        <input type="hidden" id="updateCMPTradeId" value="" />
+        
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Current Market Price / CMP (₹)</label>
+          <input type="number" step="any" id="updateCMPPrice" placeholder="0.00" required class="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:outline-none font-bold text-purple-700 text-sm" />
+          <p class="text-[11px] text-slate-400 mt-1">This will update your live floating profit/loss instantly</p>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeUpdateCMPModal()" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-semibold transition">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold shadow-sm transition">Update CMP</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- QUICK EXIT MODAL -->
+  <div id="quickExitModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-100">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Close / Sell Position</h3>
+          <p class="text-xs text-slate-400" id="quickExitSymbolText">Selling Stock</p>
+        </div>
+        <button onclick="closeQuickExitModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleQuickExitSubmit(event)" class="flex flex-col gap-3 text-xs">
+        <input type="hidden" id="quickExitTradeId" value="" />
+        
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Sell / Exit Date</label>
+          <input type="date" id="quickExitDate" required class="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Final Selling Price (₹)</label>
+          <input type="number" step="any" id="quickExitPrice" placeholder="0.00" required class="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none font-bold text-emerald-600 text-sm" />
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1 text-amber-700">Final Brokerage / Tax (₹)</label>
+          <input type="number" step="any" id="quickExitCharges" value="0" min="0" class="w-full p-2.5 border border-amber-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none bg-amber-50/40" />
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeQuickExitModal()" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-semibold transition">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-sm transition">Book / Close Trade</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- SETTINGS & CAPITAL MODAL -->
+  <div id="settingsModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Capital & Settings Setup</h3>
+          <p class="text-xs text-slate-400">Set your starting capital & custom card titles</p>
+        </div>
+        <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleSaveSettings(event)" class="flex flex-col gap-3 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Your Total Starting Capital / Investment (₹)</label>
+          <input type="number" id="settingTotalCapital" step="any" required placeholder="e.g. 10000" class="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none font-bold text-blue-600 text-sm" />
+          <p class="text-[11px] text-slate-400 mt-1">Used for live CAGR & Return % calculation</p>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Brand / Title</label>
+          <input type="text" id="settingAppTitle" class="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Trader Name</label>
+          <input type="text" id="settingUserName" class="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Card 1 Title</label>
+          <input type="text" id="settingCard1" class="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Card 2 Title</label>
+          <input type="text" id="settingCard2" class="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Card 3 Title</label>
+          <input type="text" id="settingCard3" class="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Card 4 Title</label>
+          <input type="text" id="settingCard4" class="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+        </div>
+
+        <div class="flex items-center justify-between pt-3 border-t border-slate-100">
+          <button type="button" onclick="clearAllData()" class="px-3 py-2 rounded-xl text-rose-600 hover:bg-rose-50 font-semibold transition text-xs">Reset All Data</button>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="closeSettingsModal()" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-semibold transition">Cancel</button>
+            <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm transition">Save Changes</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- APPLICATION LOGIC & SUPABASE CLOUD ENGINE -->
+  <script>
+    Chart.register(ChartDataLabels);
+
+    const DEFAULT_SETTINGS = {
+      appTitle: 'Trade Journal',
+      initialCapital: 10000,
+      card1Title: 'Total Capital (Investment)',
+      card2Title: 'Current month Return',
+      card3Title: 'Till Date Return',
+      card4Title: 'Total Portfolio Value',
+      userName: 'My Trading Desk'
+    };
+
+    let state = {
+      settings: JSON.parse(localStorage.getItem('tj_live_settings_v4')) || DEFAULT_SETTINGS,
+      trades: JSON.parse(localStorage.getItem('tj_live_trades_v4')) || [],
+      cloudConfig: JSON.parse(localStorage.getItem('tj_cloud_config')) || { url: '', key: '' },
+      activeTab: 'dashboard',
+    };
+
+    if (state.trades.length === 0 && localStorage.getItem('tj_live_trades_v3')) {
+      state.trades = JSON.parse(localStorage.getItem('tj_live_trades_v3')) || [];
+      state.settings = JSON.parse(localStorage.getItem('tj_live_settings_v3')) || DEFAULT_SETTINGS;
+    }
+
+    let supabaseClient = null;
+    let performanceChartInstance = null;
+    let timeWiseChartInstance = null;
+
+    // ================= SUPABASE CLOUD SYNC ENGINE =================
+    function initSupabase() {
+      if (state.cloudConfig && state.cloudConfig.url && state.cloudConfig.key) {
+        try {
+          supabaseClient = supabase.createClient(state.cloudConfig.url, state.cloudConfig.key);
+          updateCloudStatusUI(true);
+        } catch (e) {
+          console.error("Supabase init error:", e);
+          supabaseClient = null;
+          updateCloudStatusUI(false);
+        }
+      } else {
+        supabaseClient = null;
+        updateCloudStatusUI(false);
+      }
+    }
+
+    function updateCloudStatusUI(isConnected) {
+      const dot = document.getElementById('cloudStatusDot');
+      const text = document.getElementById('cloudStatusText');
+      const btn = document.getElementById('cloudStatusBtn');
+
+      if (isConnected) {
+        dot.className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
+        text.innerText = "Cloud Synced";
+        text.className = "text-emerald-700 font-bold";
+        btn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 transition";
+      } else {
+        dot.className = "w-2 h-2 rounded-full bg-slate-400";
+        text.innerText = "Offline (Local)";
+        text.className = "text-slate-600 font-semibold";
+        btn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-600 transition";
+      }
+    }
+
+    async function fetchDataFromCloud() {
+      if (!supabaseClient) return;
+      try {
+        const { data, error } = await supabaseClient.from('trades').select('*').order('date', { ascending: false });
+        if (error) {
+          console.error("Supabase fetch error:", error);
+          return;
+        }
+        if (data) {
+          state.trades = data.map(t => ({
+            id: t.id,
+            date: t.date,
+            symbol: t.symbol,
+            type: t.type,
+            entry: Number(t.entry),
+            exit: t.exit !== null ? Number(t.exit) : null,
+            qty: Number(t.qty),
+            charges: Number(t.charges || 0),
+            grossPnl: Number(t.gross_pnl || t.pnl),
+            pnl: Number(t.pnl),
+            returnPct: Number(t.return_pct),
+            strategy: t.strategy || '',
+            notes: t.notes || '',
+            isHolding: Boolean(t.is_holding),
+            status: t.status
+          }));
+          localStorage.setItem('tj_live_trades_v4', JSON.stringify(state.trades));
+          recalculateAndRenderAll();
+          renderTradesTable();
+        }
+      } catch (err) {
+        console.error("Error fetching from cloud:", err);
+      }
+    }
+
+    async function syncTradeToCloud(tradeObj, action = 'UPSERT') {
+      if (!supabaseClient) return { ok: false, error: 'Cloud is not connected' };
+      try {
+        let result;
+        if (action === 'DELETE') {
+          result = await supabaseClient.from('trades').delete().eq('id', tradeObj.id);
+        } else {
+          const dbRecord = {
+            id: String(tradeObj.id),
+            date: tradeObj.date,
+            symbol: tradeObj.symbol,
+            type: tradeObj.type,
+            entry: tradeObj.entry,
+            exit: tradeObj.exit,
+            qty: tradeObj.qty,
+            charges: tradeObj.charges || 0,
+            gross_pnl: tradeObj.grossPnl,
+            pnl: tradeObj.pnl,
+            return_pct: tradeObj.returnPct,
+            strategy: tradeObj.strategy || '',
+            notes: tradeObj.notes || '',
+            is_holding: Boolean(tradeObj.isHolding),
+            status: tradeObj.status
+          };
+          result = await supabaseClient.from('trades').upsert(dbRecord, { onConflict: 'id' });
+        }
+        if (result.error) {
+          console.error("Cloud sync error:", result.error);
+          return { ok: false, error: result.error };
+        }
+        return { ok: true };
+      } catch (err) {
+        console.error("Cloud sync error:", err);
+        return { ok: false, error: err };
+      }
+    }
+
+    function openCloudSyncModal() {
+      document.getElementById('cloudSupabaseUrl').value = state.cloudConfig.url || '';
+      document.getElementById('cloudSupabaseKey').value = state.cloudConfig.key || '';
+      document.getElementById('cloudSyncModal').classList.remove('hidden');
+    }
+
+    function closeCloudSyncModal() {
+      document.getElementById('cloudSyncModal').classList.add('hidden');
+    }
+
+    async function handleSaveCloudConfig(e) {
+      e.preventDefault();
+      const url = document.getElementById('cloudSupabaseUrl').value.trim();
+      const key = document.getElementById('cloudSupabaseKey').value.trim();
+
+      if (!url || !key) {
+        alert('Please enter both Supabase URL and Key!');
+        return;
+      }
+
+      // IMPORTANT: Keep the existing local trades before reading the cloud.
+      // The previous version fetched the empty Supabase table first, which replaced
+      // the local trades with [] and therefore uploaded nothing.
+      const localTrades = [...state.trades];
+
+      state.cloudConfig = { url, key };
+      localStorage.setItem('tj_cloud_config', JSON.stringify(state.cloudConfig));
+      initSupabase();
+
+      if (!supabaseClient) {
+        alert('❌ Could not connect to Supabase. Please check the Project URL and Anon Public Key.');
+        return;
+      }
+
+      let failed = 0;
+      for (const t of localTrades) {
+        const result = await syncTradeToCloud(t, 'UPSERT');
+        if (!result.ok) failed++;
+      }
+
+      // Only fetch after local data has been uploaded.
+      await fetchDataFromCloud();
+      closeCloudSyncModal();
+
+      if (failed > 0) {
+        alert(`⚠️ Cloud connected, but ${failed} trade(s) could not be uploaded. Check the browser console for the Supabase error.`);
+      } else {
+        alert(`🎉 Cloud connected! ${localTrades.length} trade(s) uploaded to Supabase. Your trades will now sync across devices.`);
+      }
+    }
+
+    function disconnectCloud() {
+      if (confirm('Disconnect cloud sync? (Your data will remain saved locally on this computer)')) {
+        state.cloudConfig = { url: '', key: '' };
+        localStorage.removeItem('tj_cloud_config');
+        supabaseClient = null;
+        updateCloudStatusUI(false);
+        closeCloudSyncModal();
+      }
+    }
+
+    function formatINR(val, includeSign = false) {
+      if (isNaN(val) || val === null || val === undefined) return '₹0';
+      const isNeg = val < 0;
+      const absVal = Math.abs(val);
+      const formatted = '₹' + absVal.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+      if (includeSign) {
+        return isNeg ? '-' + formatted : '+' + formatted;
+      }
+      return isNeg ? '-' + formatted : formatted;
+    }
+
+    function openBackupModal() {
+      document.getElementById('backupModal').classList.remove('hidden');
+    }
+
+    function closeBackupModal() {
+      document.getElementById('backupModal').classList.add('hidden');
+    }
+
+    function exportJSONBackup() {
+      const backupData = {
+        version: '1.0',
+        exportedAt: new Date().toISOString(),
+        settings: state.settings,
+        trades: state.trades
+      };
+
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `trade_journal_backup_${new Date().toISOString().split('T')[0]}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function handleImportJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (parsed.trades && Array.isArray(parsed.trades)) {
+            state.trades = parsed.trades;
+            if (parsed.settings) state.settings = parsed.settings;
+
+            localStorage.setItem('tj_live_trades_v4', JSON.stringify(state.trades));
+            localStorage.setItem('tj_live_settings_v4', JSON.stringify(state.settings));
+
+            if (supabaseClient) {
+              for (let t of state.trades) {
+                await syncTradeToCloud(t, 'UPSERT');
+              }
+            }
+
+            applySettings();
+            recalculateAndRenderAll();
+            renderTradesTable();
+            closeBackupModal();
+            alert(`✅ Successfully restored ${state.trades.length} trades and your capital settings!`);
+          } else {
+            alert('❌ Invalid backup file format!');
+          }
+        } catch (err) {
+          alert('❌ Error reading backup file: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function scrollToHoldings() {
+      const el = document.getElementById('activeHoldingsDashboardSection');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function switchTab(tab) {
+      state.activeTab = tab;
+      const dashboardView = document.getElementById('dashboardView');
+      const tradeDataView = document.getElementById('tradeDataView');
+      const tabDashboardBtn = document.getElementById('tabDashboardBtn');
+      const tabTradeDataBtn = document.getElementById('tabTradeDataBtn');
+      const pageHeading = document.getElementById('pageHeading');
+
+      if (tab === 'dashboard') {
+        dashboardView.classList.remove('hidden');
+        tradeDataView.classList.add('hidden');
+        tabDashboardBtn.className = "px-5 py-2 text-sm font-semibold rounded-lg bg-slate-900 text-white transition-all shadow-sm";
+        tabTradeDataBtn.className = "px-5 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5";
+        pageHeading.innerText = "Trading Overview (INR)";
+        recalculateAndRenderAll();
+      } else {
+        dashboardView.classList.add('hidden');
+        tradeDataView.classList.remove('hidden');
+        tabTradeDataBtn.className = "px-5 py-2 text-sm font-semibold rounded-lg bg-slate-900 text-white transition-all shadow-sm flex items-center gap-1.5";
+        tabDashboardBtn.className = "px-5 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all";
+        pageHeading.innerText = "Trade Log Journal (INR)";
+        renderTradesTable();
+      }
+    }
+
+    function applySettings() {
+      if (document.getElementById('appTitle')) {
+        document.getElementById('appTitle').innerText = state.settings.appTitle;
+      }
+      document.getElementById('card1Title').innerText = state.settings.card1Title;
+      document.getElementById('card2Title').innerText = state.settings.card2Title;
+      document.getElementById('card3Title').innerText = state.settings.card3Title;
+      document.getElementById('card4Title').innerText = state.settings.card4Title;
+      document.getElementById('userName').innerText = state.settings.userName;
+      document.getElementById('totalCapitalVal').innerText = formatINR(state.settings.initialCapital);
+    }
+
+    function openSettingsModal() {
+      document.getElementById('settingTotalCapital').value = state.settings.initialCapital;
+      document.getElementById('settingAppTitle').value = state.settings.appTitle;
+      document.getElementById('settingUserName').value = state.settings.userName;
+      document.getElementById('settingCard1').value = state.settings.card1Title;
+      document.getElementById('settingCard2').value = state.settings.card2Title;
+      document.getElementById('settingCard3').value = state.settings.card3Title;
+      document.getElementById('settingCard4').value = state.settings.card4Title;
+      document.getElementById('settingsModal').classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settingsModal').classList.add('hidden');
+    }
+
+    function handleSaveSettings(e) {
+      e.preventDefault();
+      state.settings = {
+        ...state.settings,
+        initialCapital: parseFloat(document.getElementById('settingTotalCapital').value) || 10000,
+        appTitle: document.getElementById('settingAppTitle').value || 'Trade Journal',
+        userName: document.getElementById('settingUserName').value || 'My Trading Desk',
+        card1Title: document.getElementById('settingCard1').value || 'Total Capital (Investment)',
+        card2Title: document.getElementById('settingCard2').value || 'Current month Return',
+        card3Title: document.getElementById('settingCard3').value || 'Till Date Return',
+        card4Title: document.getElementById('settingCard4').value || 'Total Portfolio Value',
+      };
+      localStorage.setItem('tj_live_settings_v4', JSON.stringify(state.settings));
+      applySettings();
+      closeSettingsModal();
+      recalculateAndRenderAll();
+    }
+
+    function clearAllData() {
+      if (confirm('Are you sure you want to clear all logged trades & holdings?')) {
+        state.trades = [];
+        localStorage.removeItem('tj_live_trades_v4');
+        closeSettingsModal();
+        recalculateAndRenderAll();
+        renderTradesTable();
+      }
+    }
+
+    function toggleHoldingMode(isHolding) {
+      const exitContainer = document.getElementById('exitPriceContainer');
+      const exitLabel = document.getElementById('exitPriceLabel');
+      const exitInput = document.getElementById('tradeExit');
+      const saveBtn = document.getElementById('saveTradeBtn');
+
+      if (isHolding) {
+        exitLabel.innerText = "Current Market Price / CMP (₹) (Optional)";
+        exitInput.placeholder = "Leave empty or enter CMP";
+        exitInput.required = false;
+        saveBtn.innerText = "Save as Active Holding";
+        saveBtn.className = "px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold shadow-sm transition";
+      } else {
+        exitLabel.innerText = "Sell / Exit Price (₹)";
+        exitInput.placeholder = "0.00";
+        exitInput.required = true;
+        saveBtn.innerText = "Save Closed Trade";
+        saveBtn.className = "px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm transition";
+      }
+    }
+
+    function openAddTradeModal() {
+      document.getElementById('tradeForm').reset();
+      document.getElementById('editTradeId').value = '';
+      document.getElementById('tradeDate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('modalTradeTitle').innerText = "Add New Trade / Holding";
+      
+      const radios = document.getElementsByName('tradePositionStatus');
+      for (let r of radios) {
+        if (r.value === 'CLOSED') r.checked = true;
+      }
+      toggleHoldingMode(false);
+      document.getElementById('addTradeModal').classList.remove('hidden');
+    }
+
+    function closeAddTradeModal() {
+      document.getElementById('addTradeModal').classList.add('hidden');
+    }
+
+    async function handleSaveTrade(e) {
+      e.preventDefault();
+      const editId = document.getElementById('editTradeId').value;
+      const date = document.getElementById('tradeDate').value;
+      const symbol = document.getElementById('tradeSymbol').value.toUpperCase().trim();
+      const type = document.getElementById('tradeType').value;
+      const entry = parseFloat(document.getElementById('tradeEntry').value) || 0;
+      const exitRaw = document.getElementById('tradeExit').value;
+      const exit = exitRaw !== "" ? parseFloat(exitRaw) : entry;
+      const qty = parseFloat(document.getElementById('tradeQty').value) || 1;
+      const charges = parseFloat(document.getElementById('tradeCharges').value) || 0;
+      const strategy = document.getElementById('tradeStrategy').value.trim();
+      const notes = document.getElementById('tradeNotes').value.trim();
+
+      let positionStatus = 'CLOSED';
+      const radios = document.getElementsByName('tradePositionStatus');
+      for (let r of radios) {
+        if (r.checked) positionStatus = r.value;
+      }
+
+      const isHolding = positionStatus === 'HOLDING';
+      const grossPnl = type === 'LONG' ? (exit - entry) * qty : (entry - exit) * qty;
+      const netPnl = Number((grossPnl - charges).toFixed(2));
+      const totalInvestmentForTrade = entry * qty;
+      const returnPct = totalInvestmentForTrade > 0 ? Number(((netPnl / totalInvestmentForTrade) * 100).toFixed(2)) : 0;
+      
+      let status = isHolding ? 'HOLDING' : (netPnl >= 0 ? 'WIN' : 'LOSS');
+
+      const tradeObj = {
+        id: editId || Date.now().toString(),
+        date,
+        symbol,
+        type,
+        entry,
+        exit: isHolding && exitRaw === "" ? null : exit,
+        qty,
+        charges,
+        grossPnl: Number(grossPnl.toFixed(2)),
+        pnl: netPnl,
+        returnPct,
+        strategy,
+        notes,
+        isHolding,
+        status
+      };
+
+      if (editId) {
+        state.trades = state.trades.map(t => t.id === editId ? tradeObj : t);
+      } else {
+        state.trades.unshift(tradeObj);
+      }
+
+      localStorage.setItem('tj_live_trades_v4', JSON.stringify(state.trades));
+      await syncTradeToCloud(tradeObj, 'UPSERT');
+
+      closeAddTradeModal();
+      renderTradesTable();
+      recalculateAndRenderAll();
+    }
+
+    function openUpdateCMPModal(id) {
+      const trade = state.trades.find(t => t.id === id);
+      if (!trade) return;
+      document.getElementById('updateCMPTradeId').value = trade.id;
+      document.getElementById('updateCMPSymbolText').innerText = `${trade.symbol} (Bought @ ₹${trade.entry})`;
+      document.getElementById('updateCMPPrice').value = trade.exit !== null && trade.exit !== undefined ? trade.exit : trade.entry;
+      document.getElementById('updateCMPModal').classList.remove('hidden');
+    }
+
+    function closeUpdateCMPModal() {
+      document.getElementById('updateCMPModal').classList.add('hidden');
+    }
+
+    async function handleUpdateCMPSubmit(e) {
+      e.preventDefault();
+      const id = document.getElementById('updateCMPTradeId').value;
+      const newCMP = parseFloat(document.getElementById('updateCMPPrice').value) || 0;
+
+      let updatedObj = null;
+      state.trades = state.trades.map(t => {
+        if (t.id === id) {
+          const grossPnl = t.type === 'LONG' ? (newCMP - t.entry) * t.qty : (t.entry - newCMP) * t.qty;
+          const netPnl = Number((grossPnl - (t.charges || 0)).toFixed(2));
+          const returnPct = Number(((netPnl / (t.entry * t.qty)) * 100).toFixed(2));
+          updatedObj = {
+            ...t,
+            exit: newCMP,
+            grossPnl: Number(grossPnl.toFixed(2)),
+            pnl: netPnl,
+            returnPct
+          };
+          return updatedObj;
+        }
+        return t;
+      });
+
+      localStorage.setItem('tj_live_trades_v4', JSON.stringify(state.trades));
+      if (updatedObj) await syncTradeToCloud(updatedObj, 'UPSERT');
+
+      closeUpdateCMPModal();
+      renderTradesTable();
+      recalculateAndRenderAll();
+    }
+
+    function openQuickExitModal(id) {
+      const trade = state.trades.find(t => t.id === id);
+      if (!trade) return;
+      document.getElementById('quickExitTradeId').value = trade.id;
+      document.getElementById('quickExitSymbolText').innerText = `Selling ${trade.symbol} (${trade.qty} shares @ Entry: ₹${trade.entry})`;
+      document.getElementById('quickExitDate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('quickExitPrice').value = trade.exit || trade.entry;
+      document.getElementById('quickExitCharges').value = trade.charges || 0;
+      document.getElementById('quickExitModal').classList.remove('hidden');
+    }
+
+    function closeQuickExitModal() {
+      document.getElementById('quickExitModal').classList.add('hidden');
+    }
+
+    async function handleQuickExitSubmit(e) {
+      e.preventDefault();
+      const id = document.getElementById('quickExitTradeId').value;
+      const exitPrice = parseFloat(document.getElementById('quickExitPrice').value) || 0;
+      const exitCharges = parseFloat(document.getElementById('quickExitCharges').value) || 0;
+      const exitDate = document.getElementById('quickExitDate').value;
+
+      let updatedObj = null;
+      state.trades = state.trades.map(t => {
+        if (t.id === id) {
+          const grossPnl = t.type === 'LONG' ? (exitPrice - t.entry) * t.qty : (t.entry - exitPrice) * t.qty;
+          const netPnl = Number((grossPnl - exitCharges).toFixed(2));
+          const returnPct = Number(((netPnl / (t.entry * t.qty)) * 100).toFixed(2));
+          updatedObj = {
+            ...t,
+            exit: exitPrice,
+            charges: exitCharges,
+            grossPnl: Number(grossPnl.toFixed(2)),
+            pnl: netPnl,
+            returnPct,
+            isHolding: false,
+            status: netPnl >= 0 ? 'WIN' : 'LOSS',
+            notes: (t.notes ? t.notes + ' | ' : '') + `Exited on ${exitDate}`
+          };
+          return updatedObj;
+        }
+        return t;
+      });
+
+      localStorage.setItem('tj_live_trades_v4', JSON.stringify(state.trades));
+      if (updatedObj) await syncTradeToCloud(updatedObj, 'UPSERT');
+
+      closeQuickExitModal();
+      renderTradesTable();
+      recalculateAndRenderAll();
+    }
+
+    async function deleteTrade(id) {
+      if (confirm('Are you sure you want to delete this entry?')) {
+        const deleted = state.trades.find(t => t.id === id);
+        state.trades = state.trades.filter(t => t.id !== id);
+        localStorage.setItem('tj_live_trades_v4', JSON.stringify(state.trades));
+        if (deleted) await syncTradeToCloud(deleted, 'DELETE');
+        renderTradesTable();
+        recalculateAndRenderAll();
+      }
+    }
+
+    function editTrade(id) {
+      const trade = state.trades.find(t => t.id === id);
+      if (!trade) return;
+      document.getElementById('editTradeId').value = trade.id;
+      document.getElementById('tradeDate').value = trade.date;
+      document.getElementById('tradeSymbol').value = trade.symbol;
+      document.getElementById('tradeType').value = trade.type;
+      document.getElementById('tradeEntry').value = trade.entry;
+      document.getElementById('tradeExit').value = trade.exit !== null && trade.exit !== undefined ? trade.exit : '';
+      document.getElementById('tradeQty').value = trade.qty;
+      document.getElementById('tradeCharges').value = trade.charges || 0;
+      document.getElementById('tradeStrategy').value = trade.strategy || '';
+      document.getElementById('tradeNotes').value = trade.notes || '';
+      
+      const isHolding = trade.isHolding || trade.status === 'HOLDING';
+      const radios = document.getElementsByName('tradePositionStatus');
+      for (let r of radios) {
+        if (r.value === (isHolding ? 'HOLDING' : 'CLOSED')) r.checked = true;
+      }
+      toggleHoldingMode(isHolding);
+
+      document.getElementById('modalTradeTitle').innerText = isHolding ? "Edit Holding Position" : "Edit Closed Trade";
+      document.getElementById('addTradeModal').classList.remove('hidden');
+    }
+
+    function renderTradesTable() {
+      const tbody = document.getElementById('tradesTableBody');
+      const searchQuery = (document.getElementById('tradeSearchInput')?.value || '').toLowerCase();
+      const statusFilter = document.getElementById('statusFilterSelect')?.value || 'ALL';
+
+      const filtered = state.trades.filter(t => {
+        const matchesSearch = t.symbol.toLowerCase().includes(searchQuery) || (t.strategy || '').toLowerCase().includes(searchQuery);
+        let matchesStatus = true;
+        if (statusFilter === 'HOLDING') matchesStatus = t.isHolding || t.status === 'HOLDING';
+        else if (statusFilter === 'WIN') matchesStatus = !t.isHolding && t.status === 'WIN';
+        else if (statusFilter === 'LOSS') matchesStatus = !t.isHolding && t.status === 'LOSS';
+        return matchesSearch && matchesStatus;
+      });
+
+      const totalHoldings = state.trades.filter(t => t.isHolding || t.status === 'HOLDING').length;
+      document.getElementById('totalTradesCountBadge').innerText = state.trades.length;
+      document.getElementById('holdingsCountBadge').innerText = `${totalHoldings} Holding`;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="12" class="text-center py-12 text-slate-400">
+              <div class="flex flex-col items-center justify-center gap-2">
+                <i data-lucide="inbox" class="w-8 h-8 text-slate-300"></i>
+                <p class="font-semibold text-slate-600">No trades or holdings found</p>
+                <p class="text-[11px] text-slate-400">Click <b>"New Entry / Holding"</b> above to log a trade!</p>
+              </div>
+            </td>
+          </tr>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(t => {
+        const isHolding = t.isHolding || t.status === 'HOLDING';
+        const isWin = !isHolding && t.status === 'WIN';
+        const isLoss = !isHolding && t.status === 'LOSS';
+
+        let statusBadgeHtml = '';
+        if (isHolding) {
+          statusBadgeHtml = `<span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 ring-1 ring-purple-500/20">🟣 HOLDING</span>`;
+        } else if (isWin) {
+          statusBadgeHtml = `<span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-600">WIN</span>`;
+        } else {
+          statusBadgeHtml = `<span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-rose-50 text-rose-600">LOSS</span>`;
+        }
+
+        const pnlDisplay = isHolding 
+          ? (t.exit !== null ? `${formatINR(t.pnl, true)} (Floating)` : '₹0.00 (Unrealized)')
+          : `${formatINR(t.pnl, true)}`;
+
+        const pnlColorClass = isHolding 
+          ? (t.pnl >= 0 ? 'text-purple-700' : 'text-rose-600')
+          : (isWin ? 'text-emerald-600' : 'text-rose-600');
+
+        return `
+          <tr class="hover:bg-slate-50/70 transition ${isHolding ? 'bg-purple-50/20' : ''}">
+            <td class="py-3 px-4 font-medium text-slate-700">${t.date}</td>
+            <td class="py-3 px-4 font-bold text-slate-900 flex items-center gap-1.5">
+              ${t.symbol}
+              ${isHolding ? '<span class="w-1.5 h-1.5 rounded-full bg-purple-600 animate-pulse" title="Active Holding"></span>' : ''}
+            </td>
+            <td class="py-3 px-4">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${t.type === 'LONG' ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-600'}">
+                ${t.type}
+              </span>
+            </td>
+            <td class="py-3 px-4 font-semibold">${formatINR(t.entry)}</td>
+            <td class="py-3 px-4 font-semibold">
+              ${t.exit !== null && t.exit !== undefined ? formatINR(t.exit) : '<span class="text-slate-400 italic">Holding (CMP)</span>'}
+            </td>
+            <td class="py-3 px-4 font-semibold">${t.qty}</td>
+            <td class="py-3 px-4 font-semibold text-amber-700 bg-amber-50/30">
+              ${formatINR(t.charges || 0)}
+            </td>
+            <td class="py-3 px-4 font-bold ${pnlColorClass}">
+              ${pnlDisplay}
+            </td>
+            <td class="py-3 px-4 font-semibold ${pnlColorClass}">
+              ${isHolding ? (t.returnPct >= 0 ? '+' : '') + t.returnPct + '%' : (isWin ? '+' : '') + t.returnPct + '%'}
+            </td>
+            <td class="py-3 px-4 text-slate-500 max-w-xs truncate" title="${t.notes || ''}">
+              <span class="font-medium text-slate-700">${t.strategy || '-'}</span>
+            </td>
+            <td class="py-3 px-4">
+              ${statusBadgeHtml}
+            </td>
+            <td class="py-3 px-4 text-right">
+              <div class="flex items-center justify-end gap-1.5">
+                ${isHolding ? `
+                  <button onclick="openUpdateCMPModal('${t.id}')" class="px-2 py-1 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-lg text-[10px] font-bold flex items-center gap-1 transition" title="Update Market Price">
+                    <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+                    CMP
+                  </button>
+                  <button onclick="openQuickExitModal('${t.id}')" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold flex items-center gap-1 shadow-sm transition" title="Sell / Exit this holding">
+                    <i data-lucide="check-circle" class="w-3 h-3"></i>
+                    Sell
+                  </button>
+                ` : ''}
+                <button onclick="editTrade('${t.id}')" class="p-1 hover:text-blue-600 text-slate-400 transition" title="Edit">
+                  <i data-lucide="edit-3" class="w-4 h-4"></i>
+                </button>
+                <button onclick="deleteTrade('${t.id}')" class="p-1 hover:text-rose-600 text-slate-400 transition" title="Delete">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function filterTradesTable() {
+      renderTradesTable();
+    }
+
+    function exportTradesCSV() {
+      if (state.trades.length === 0) {
+        alert('No trade data to export! Please add some trades or holdings first.');
+        return;
+      }
+      const headers = ['Date', 'Symbol', 'Type', 'Entry (INR)', 'Exit/CMP (INR)', 'Qty', 'Brokerage/Tax (INR)', 'Gross PnL (INR)', 'Net PnL (INR)', 'ReturnPct', 'Strategy', 'Status', 'Notes'];
+      const rows = state.trades.map(t => [
+        t.date, t.symbol, t.type, t.entry, t.exit !== null ? t.exit : 'Holding', t.qty, t.charges || 0, t.grossPnl || t.pnl, t.pnl, t.returnPct, `"${(t.strategy || '').replace(/"/g, '""')}"`, t.status, `"${(t.notes || '').replace(/"/g, '""')}"`
+      ]);
+
+      const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `trading_journal_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // Active Holdings Widget
+    function renderActiveHoldingsWidget(holdingTrades) {
+      const container = document.getElementById('activeHoldingsListContainer');
+      const pill = document.getElementById('dashboardHoldingsCountPill');
+      const navBadge = document.getElementById('navHoldingsCountBadge');
+
+      pill.innerText = `${holdingTrades.length} Active Holding${holdingTrades.length === 1 ? '' : 's'}`;
+
+      if (holdingTrades.length > 0) {
+        navBadge.innerText = holdingTrades.length;
+        navBadge.classList.remove('hidden');
+      } else {
+        navBadge.classList.add('hidden');
+      }
+
+      if (holdingTrades.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full bg-white/5 border border-white/10 rounded-xl p-6 text-center">
+            <i data-lucide="check-circle-2" class="w-8 h-8 text-purple-400 mx-auto mb-2 opacity-60"></i>
+            <p class="text-sm font-semibold text-white">No Open Holdings Currently</p>
+            <p class="text-xs text-purple-200/70 max-w-sm mx-auto mt-1">All your trades are closed, or you can add new stocks you bought to hold using "+ Add New Holding".</p>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      container.innerHTML = holdingTrades.map(h => {
+        const investedAmount = h.entry * h.qty;
+        const currentVal = (h.exit || h.entry) * h.qty;
+        const pnl = h.pnl || 0;
+        const isPos = pnl >= 0;
+        const returnPct = h.returnPct || 0;
+
+        let daysHeldText = 'Today';
+        if (h.date) {
+          const buyDate = new Date(h.date);
+          const diffDays = Math.floor((new Date() - buyDate) / (1000 * 60 * 60 * 24));
+          if (diffDays === 1) daysHeldText = '1 day ago';
+          else if (diffDays > 1) daysHeldText = `${diffDays} days ago`;
+        }
+
+        return `
+          <div class="bg-white/10 backdrop-blur border border-white/15 rounded-xl p-4 flex flex-col justify-between gap-3 hover:bg-white/15 transition shadow-sm">
+            
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="flex items-center gap-2">
+                  <h4 class="text-base font-extrabold text-white tracking-wide">${h.symbol}</h4>
+                  <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-400/20 text-purple-300 border border-purple-400/30">
+                    ${h.qty} Shares
+                  </span>
+                </div>
+                <div class="text-[11px] text-purple-200/70 mt-0.5">
+                  Bought on ${h.date} (${daysHeldText})
+                </div>
+              </div>
+
+              <div class="text-right">
+                <div class="text-sm font-black ${isPos ? 'text-emerald-400' : 'text-rose-400'}">
+                  ${formatINR(pnl, true)}
+                </div>
+                <div class="text-[10px] font-bold ${isPos ? 'text-emerald-300' : 'text-rose-300'}">
+                  ${isPos ? '+' : ''}${returnPct}%
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 bg-black/20 rounded-lg p-2 text-xs">
+              <div>
+                <span class="text-[10px] text-purple-200/60 block">Buy Price:</span>
+                <span class="font-bold text-white">${formatINR(h.entry)}</span>
+              </div>
+              <div>
+                <span class="text-[10px] text-purple-200/60 block">Current CMP:</span>
+                <span class="font-bold text-white flex items-center gap-1">
+                  ${formatINR(h.exit || h.entry)}
+                  <button onclick="openUpdateCMPModal('${h.id}')" class="text-purple-300 hover:text-white" title="Change CMP">
+                    <i data-lucide="edit-2" class="w-3 h-3"></i>
+                  </button>
+                </span>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-1 border-t border-white/10 text-xs">
+              <span class="text-[11px] text-purple-200/80 truncate max-w-[140px]" title="${h.strategy || ''}">
+                ${h.strategy ? `🎯 ${h.strategy}` : '⚡ Open Position'}
+              </span>
+
+              <div class="flex items-center gap-1.5">
+                <button onclick="openUpdateCMPModal('${h.id}')" class="px-2.5 py-1 bg-white/20 hover:bg-white/30 text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition">
+                  <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+                  CMP
+                </button>
+                <button onclick="openQuickExitModal('${h.id}')" class="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm transition">
+                  <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                  Sell/Exit
+                </button>
+              </div>
+            </div>
+
+          </div>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    // ================= DYNAMIC ENGINE: AUTO RECALCULATE DASHBOARD =================
+    function recalculateAndRenderAll() {
+      const initialCapital = state.settings.initialCapital || 10000;
+      const trades = [...state.trades].sort((a, b) => new Date(a.date) - new Date(b.date));
+      
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth();
+
+      const closedTrades = trades.filter(t => !t.isHolding && t.status !== 'HOLDING');
+      const holdingTrades = trades.filter(t => t.isHolding || t.status === 'HOLDING');
+
+      const totalRealizedPnl = closedTrades.reduce((acc, t) => acc + (t.pnl || 0), 0);
+      const totalUnrealizedPnl = holdingTrades.reduce((acc, t) => acc + (t.pnl || 0), 0);
+      const totalCombinedPnl = totalRealizedPnl + totalUnrealizedPnl;
+
+      const totalPortfolioValue = initialCapital + totalCombinedPnl;
+      const totalTradesCount = closedTrades.length;
+
+      const tillDateReturnPct = initialCapital > 0 ? ((totalCombinedPnl / initialCapital) * 100) : 0;
+
+      const currentMonthTrades = closedTrades.filter(t => {
+        const d = new Date(t.date);
+        return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+      });
+      const currentMonthPnl = currentMonthTrades.reduce((acc, t) => acc + (t.pnl || 0), 0);
+      const currentMonthReturnPct = initialCapital > 0 ? ((currentMonthPnl / initialCapital) * 100) : 0;
+      const currentMonthTradesCount = currentMonthTrades.length;
+
+      document.getElementById('totalCapitalVal').innerText = formatINR(initialCapital);
+      document.getElementById('openHoldingsBadge').innerText = `${holdingTrades.length} Holding${holdingTrades.length === 1 ? '' : 's'}`;
+      document.getElementById('totalPortfolioVal').innerText = formatINR(totalPortfolioValue);
+      document.getElementById('totalNetPnlText').innerText = formatINR(totalRealizedPnl, true);
+      document.getElementById('unrealizedPnlText').innerText = `Holdings: ${formatINR(totalUnrealizedPnl, true)}`;
+
+      document.getElementById('currMonthReturnVal').innerText = formatINR(currentMonthPnl, true);
+      document.getElementById('currMonthReturnPct').innerText = (currentMonthReturnPct >= 0 ? '+' : '') + currentMonthReturnPct.toFixed(1) + '%';
+      document.getElementById('currMonthTradesCount').innerText = currentMonthTradesCount;
+      const currMonthBadge = document.getElementById('currMonthBadge');
+      if (currentMonthPnl >= 0) {
+        currMonthBadge.className = "inline-flex items-center gap-0.5 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md";
+      } else {
+        currMonthBadge.className = "inline-flex items-center gap-0.5 text-xs font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md";
+      }
+
+      document.getElementById('tillDateReturnVal').innerText = formatINR(totalCombinedPnl, true);
+      document.getElementById('tillDateReturnPct').innerText = (tillDateReturnPct >= 0 ? '+' : '') + tillDateReturnPct.toFixed(1) + '%';
+      document.getElementById('tillDateTradesCount').innerText = totalTradesCount;
+      const tillDateBadge = document.getElementById('tillDateBadge');
+      if (totalCombinedPnl >= 0) {
+        tillDateBadge.className = "inline-flex items-center gap-0.5 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md";
+      } else {
+        tillDateBadge.className = "inline-flex items-center gap-0.5 text-xs font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md";
+      }
+
+      let cagr1Yr = 0;
+      let cagr3Yr = 0;
+      if (initialCapital > 0 && totalPortfolioValue > 0) {
+        cagr1Yr = Number((((totalPortfolioValue - initialCapital) / initialCapital) * 100).toFixed(1));
+        const ratio = totalPortfolioValue / initialCapital;
+        cagr3Yr = Number(((Math.pow(ratio, 1/3) - 1) * 100).toFixed(1));
+      }
+
+      const displayCAGR = cagr1Yr;
+      document.getElementById('cagrValue').innerText = `${displayCAGR >= 0 ? '+' : ''}${displayCAGR}%`;
+      document.getElementById('cagrTextBadge').innerText = `${displayCAGR}%`;
+      document.getElementById('cagr1Yr').innerText = `${cagr1Yr >= 0 ? '+' : ''}${cagr1Yr}%`;
+      document.getElementById('cagr3Yr').innerText = `${cagr3Yr >= 0 ? '+' : ''}${cagr3Yr}%`;
+
+      drawCAGRGauge(Math.max(0, displayCAGR), 14.2);
+
+      renderActiveHoldingsWidget(holdingTrades);
+      updatePerformanceStackedChart(closedTrades);
+      updateTimeWiseChartGroupedByDate(trades, initialCapital);
+    }
+
+    function drawCAGRGauge(userPercent = 0, niftyPercent = 14.2) {
+      const canvas = document.getElementById('gaugeCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const width = canvas.width;
+      const height = canvas.height;
+      ctx.clearRect(0, 0, width, height);
+
+      const centerX = width / 2;
+      const centerY = height - 15;
+      const radius = 95;
+      const totalSegments = 18;
+      const startAngle = Math.PI;
+      const endAngle = 2 * Math.PI;
+      
+      const maxRange = 100;
+      const userActiveSegments = Math.min(totalSegments, Math.max(userPercent > 0 ? 1 : 0, Math.round((userPercent / maxRange) * totalSegments)));
+      const niftySegmentIdx = Math.min(totalSegments - 1, Math.round((niftyPercent / maxRange) * totalSegments));
+
+      const segmentAngle = (endAngle - startAngle) / totalSegments;
+      const gap = 0.04;
+
+      for (let i = 0; i < totalSegments; i++) {
+        const segStart = startAngle + i * segmentAngle + gap / 2;
+        const segEnd = startAngle + (i + 1) * segmentAngle - gap / 2;
+
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, segStart, segEnd);
+        ctx.lineWidth = 14;
+
+        if (i < userActiveSegments) {
+          const ratio = i / totalSegments;
+          const r = Math.round(37 + ratio * 80);
+          const g = Math.round(99 + ratio * 100);
+          const b = 246;
+          ctx.strokeStyle = `rgb(${r}, ${g}, ${b})`;
+        } else {
+          ctx.strokeStyle = '#e2e8f0';
+        }
+        ctx.stroke();
+
+        if (i === niftySegmentIdx) {
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, radius + 10, segStart, segEnd);
+          ctx.lineWidth = 4;
+          ctx.strokeStyle = '#f59e0b';
+          ctx.stroke();
+        }
+      }
+    }
+
+    function updatePerformanceStackedChart(closedTrades) {
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const monthlyNetPnl = new Array(12).fill(0);
+      const monthlyBrokerage = new Array(12).fill(0);
+      const monthlyGrossPnl = new Array(12).fill(0);
+
+      closedTrades.forEach(t => {
+        if (!t.date) return;
+        const d = new Date(t.date);
+        const m = d.getMonth();
+        if (m >= 0 && m < 12) {
+          monthlyNetPnl[m] += (t.pnl || 0);
+          monthlyBrokerage[m] += (t.charges || 0);
+          monthlyGrossPnl[m] += (t.grossPnl !== undefined ? t.grossPnl : (t.pnl + (t.charges || 0)));
+        }
+      });
+
+      const hasData = closedTrades.length > 0;
+      const emptyEl = document.getElementById('perfEmptyState');
+      if (emptyEl) {
+        if (!hasData) emptyEl.classList.remove('hidden');
+        else emptyEl.classList.add('hidden');
+      }
+
+      const ctx = document.getElementById('performanceBarChart').getContext('2d');
+      if (performanceChartInstance) performanceChartInstance.destroy();
+
+      const netBarColors = monthlyNetPnl.map(val => val >= 0 ? '#10b981' : '#f43f5e');
+      const netHoverColors = monthlyNetPnl.map(val => val >= 0 ? '#059669' : '#e11d48');
+
+      performanceChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: monthNames,
+          datasets: [
+            {
+              label: 'Net Profit',
+              data: monthlyNetPnl,
+              backgroundColor: netBarColors,
+              hoverBackgroundColor: netHoverColors,
+              borderRadius: { topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0 },
+              borderSkipped: false,
+              barThickness: 24,
+              stack: 'candleStack',
+              datalabels: { display: false }
+            },
+            {
+              label: 'Brokerage / Tax',
+              data: monthlyBrokerage,
+              backgroundColor: '#f59e0b',
+              hoverBackgroundColor: '#d97706',
+              borderRadius: { topLeft: 0, topRight: 0, bottomLeft: 6, bottomRight: 6 },
+              borderSkipped: false,
+              barThickness: 24,
+              stack: 'candleStack',
+              datalabels: { display: false }
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#0f172a',
+              titleFont: { size: 12, weight: 'bold' },
+              bodyFont: { size: 12 },
+              padding: 12,
+              cornerRadius: 8,
+              callbacks: {
+                title: function(items) {
+                  return `${items[0].label} Performance Breakdown`;
+                },
+                label: function(context) {
+                  const mIdx = context.dataIndex;
+                  if (context.datasetIndex === 0) {
+                    return ` 🟢 Net Profit: ${formatINR(monthlyNetPnl[mIdx], true)}`;
+                  } else {
+                    return ` 🟧 Brokerage / Tax: ${formatINR(monthlyBrokerage[mIdx])}`;
+                  }
+                },
+                afterBody: function(items) {
+                  const mIdx = items[0].dataIndex;
+                  const gross = monthlyGrossPnl[mIdx];
+                  return [
+                    ` -------------------------`,
+                    ` 🟦 Total Gross: ${formatINR(gross, true)}`
+                  ];
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              stacked: true,
+              ticks: {
+                color: '#64748b',
+                font: { size: 11, weight: '600' }
+              },
+              grid: { display: false }
+            },
+            y: {
+              stacked: true,
+              ticks: {
+                callback: function(value) {
+                  if (Math.abs(value) >= 1000) return (value < 0 ? '-' : '') + '₹' + (Math.abs(value)/1000).toFixed(1) + 'k';
+                  return (value < 0 ? '-' : '') + '₹' + Math.abs(value);
+                },
+                color: '#94a3b8',
+                font: { size: 11 }
+              },
+              grid: {
+                color: '#f1f5f9',
+                drawBorder: false
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function updateTimeWiseChartGroupedByDate(trades, initialCapital) {
+      const emptyEl = document.getElementById('timeWiseEmptyState');
+      if (emptyEl) {
+        if (trades.length === 0) emptyEl.classList.remove('hidden');
+        else emptyEl.classList.add('hidden');
+      }
+
+      const dateMap = {};
+
+      trades.forEach(t => {
+        if (!t.date) return;
+        const d = t.date;
+        if (!dateMap[d]) {
+          dateMap[d] = { netPnl: 0, count: 0 };
+        }
+        dateMap[d].netPnl += (t.pnl || 0);
+        dateMap[d].count += 1;
+      });
+
+      const sortedUniqueDates = Object.keys(dateMap).sort((a, b) => new Date(a) - new Date(b));
+
+      const labels = ['Start'];
+      const dataPoints = [initialCapital];
+      const dailyDetails = [{ count: 0, dayNetPnl: 0, fullDate: 'Initial Investment' }];
+
+      let runningBalance = initialCapital;
+      sortedUniqueDates.forEach(dateStr => {
+        const item = dateMap[dateStr];
+        runningBalance += item.netPnl;
+        
+        const shortDate = dateStr.length >= 10 ? dateStr.slice(5) : dateStr;
+        labels.push(shortDate);
+        dataPoints.push(Number(runningBalance.toFixed(2)));
+        dailyDetails.push({ count: item.count, dayNetPnl: item.netPnl, fullDate: dateStr });
+      });
+
+      const ctx = document.getElementById('timeWiseLineChart').getContext('2d');
+      if (timeWiseChartInstance) timeWiseChartInstance.destroy();
+
+      const gradient = ctx.createLinearGradient(0, 0, 0, 260);
+      gradient.addColorStop(0, 'rgba(37, 99, 235, 0.35)');
+      gradient.addColorStop(0.7, 'rgba(37, 99, 235, 0.05)');
+      gradient.addColorStop(1, 'rgba(37, 99, 235, 0.0)');
+
+      timeWiseChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Portfolio Equity',
+            data: dataPoints,
+            fill: true,
+            backgroundColor: gradient,
+            borderColor: '#2563eb',
+            borderWidth: 3,
+            tension: 0.35,
+            pointBackgroundColor: '#ffffff',
+            pointBorderColor: '#2563eb',
+            pointBorderWidth: 2.5,
+            pointRadius: dataPoints.length > 25 ? 3.5 : 6,
+            pointHoverRadius: 8.5,
+            datalabels: {
+              display: function(context) {
+                return dataPoints.length <= 12 || context.dataIndex === 0 || context.dataIndex === dataPoints.length - 1 || context.dataIndex % 2 === 0;
+              },
+              align: 'top',
+              offset: 8,
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              borderColor: '#e2e8f0',
+              borderWidth: 1,
+              borderRadius: 6,
+              color: '#1e293b',
+              font: {
+                size: 10,
+                weight: 'bold',
+                family: '"Plus Jakarta Sans", sans-serif'
+              },
+              padding: { top: 3, bottom: 3, left: 6, right: 6 },
+              formatter: function(value) {
+                if (Math.abs(value) >= 100000) return (value < 0 ? '-' : '') + '₹' + (Math.abs(value)/100000).toFixed(1) + 'L';
+                if (Math.abs(value) >= 1000) return (value < 0 ? '-' : '') + '₹' + (Math.abs(value)/1000).toFixed(1) + 'k';
+                return (value < 0 ? '-' : '') + '₹' + Math.abs(value);
+              }
+            }
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: {
+            padding: { top: 30, bottom: 10 }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#0f172a',
+              padding: 12,
+              cornerRadius: 8,
+              callbacks: {
+                title: function(items) {
+                  const idx = items[0].dataIndex;
+                  const d = dailyDetails[idx];
+                  if (idx === 0) return '🏁 Initial Balance (Start)';
+                  return `📅 Date: ${d.fullDate} (${d.count} Trade${d.count === 1 ? '' : 's'})`;
+                },
+                label: function(context) {
+                  return ` 💰 Portfolio Value: ${formatINR(context.raw)}`;
+                },
+                afterBody: function(items) {
+                  const idx = items[0].dataIndex;
+                  if (idx === 0) return [];
+                  const d = dailyDetails[idx];
+                  return [
+                    ` 📊 Day's Total P&L: ${formatINR(d.dayNetPnl, true)}`
+                  ];
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              ticks: {
+                callback: function(value) {
+                  if (Math.abs(value) >= 100000) return (value < 0 ? '-' : '') + '₹' + (Math.abs(value)/100000) + 'L';
+                  if (Math.abs(value) >= 1000) return (value < 0 ? '-' : '') + '₹' + (Math.abs(value)/1000) + 'k';
+                  return (value < 0 ? '-' : '') + '₹' + Math.abs(value);
+                },
+                color: '#94a3b8',
+                font: { size: 11 }
+              },
+              grid: {
+                color: '#f1f5f9',
+                drawBorder: false
+              }
+            },
+            x: {
+              ticks: {
+                color: '#64748b',
+                font: { size: 11, weight: '600' }
+              },
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    function refreshData() {
+      if (supabaseClient) {
+        fetchDataFromCloud();
+      } else {
+        recalculateAndRenderAll();
+        renderTradesTable();
+      }
+    }
+
+    function handleTimeFilterChange() {
+      recalculateAndRenderAll();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      applySettings();
+      initSupabase();
+      recalculateAndRenderAll();
+      renderTradesTable();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>

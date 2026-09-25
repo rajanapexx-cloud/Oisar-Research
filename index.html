@@ -1993,13 +1993,18 @@
       recalculateAndRenderAll();
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
-      applySettings();
-      initSupabase();
-      recalculateAndRenderAll();
-      renderTradesTable();
-      lucide.createIcons();
-    });
+    window.addEventListener('DOMContentLoaded', async () => {
+  applySettings();
+  initSupabase();
+
+  if (supabaseClient) {
+    await fetchDataFromCloud();
+  }
+
+  recalculateAndRenderAll();
+  renderTradesTable();
+  lucide.createIcons();
+});
   </script>
 </body>
 </html>

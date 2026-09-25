@@ -783,12 +783,13 @@
         try {
           supabaseClient = supabase.createClient(state.cloudConfig.url, state.cloudConfig.key);
           updateCloudStatusUI(true);
-          fetchDataFromCloud();
         } catch (e) {
           console.error("Supabase init error:", e);
+          supabaseClient = null;
           updateCloudStatusUI(false);
         }
       } else {
+        supabaseClient = null;
         updateCloudStatusUI(false);
       }
     }
@@ -815,7 +816,11 @@
       if (!supabaseClient) return;
       try {
         const { data, error } = await supabaseClient.from('trades').select('*').order('date', { ascending: false });
-        if (!error && data) {
+        if (error) {
+          console.error("Supabase fetch error:", error);
+          return;
+        }
+        if (data) {
           state.trades = data.map(t => ({
             id: t.id,
             date: t.date,
@@ -843,13 +848,14 @@
     }
 
     async function syncTradeToCloud(tradeObj, action = 'UPSERT') {
-      if (!supabaseClient) return;
+      if (!supabaseClient) return { ok: false, error: 'Cloud is not connected' };
       try {
+        let result;
         if (action === 'DELETE') {
-          await supabaseClient.from('trades').delete().eq('id', tradeObj.id);
+          result = await supabaseClient.from('trades').delete().eq('id', tradeObj.id);
         } else {
           const dbRecord = {
-            id: tradeObj.id,
+            id: String(tradeObj.id),
             date: tradeObj.date,
             symbol: tradeObj.symbol,
             type: tradeObj.type,
@@ -860,15 +866,21 @@
             gross_pnl: tradeObj.grossPnl,
             pnl: tradeObj.pnl,
             return_pct: tradeObj.returnPct,
-            strategy: tradeObj.strategy,
-            notes: tradeObj.notes,
-            is_holding: tradeObj.isHolding,
+            strategy: tradeObj.strategy || '',
+            notes: tradeObj.notes || '',
+            is_holding: Boolean(tradeObj.isHolding),
             status: tradeObj.status
           };
-          await supabaseClient.from('trades').upsert(dbRecord);
+          result = await supabaseClient.from('trades').upsert(dbRecord, { onConflict: 'id' });
         }
+        if (result.error) {
+          console.error("Cloud sync error:", result.error);
+          return { ok: false, error: result.error };
+        }
+        return { ok: true };
       } catch (err) {
         console.error("Cloud sync error:", err);
+        return { ok: false, error: err };
       }
     }
 
@@ -892,20 +904,35 @@
         return;
       }
 
+      // IMPORTANT: Keep the existing local trades before reading the cloud.
+      // The previous version fetched the empty Supabase table first, which replaced
+      // the local trades with [] and therefore uploaded nothing.
+      const localTrades = [...state.trades];
+
       state.cloudConfig = { url, key };
       localStorage.setItem('tj_cloud_config', JSON.stringify(state.cloudConfig));
-      
       initSupabase();
 
-      // Push all existing local trades to cloud
-      if (supabaseClient && state.trades.length > 0) {
-        for (let t of state.trades) {
-          await syncTradeToCloud(t, 'UPSERT');
-        }
+      if (!supabaseClient) {
+        alert('❌ Could not connect to Supabase. Please check the Project URL and Anon Public Key.');
+        return;
       }
 
+      let failed = 0;
+      for (const t of localTrades) {
+        const result = await syncTradeToCloud(t, 'UPSERT');
+        if (!result.ok) failed++;
+      }
+
+      // Only fetch after local data has been uploaded.
+      await fetchDataFromCloud();
       closeCloudSyncModal();
-      alert('🎉 Supabase Cloud Database Connected! Your trades will now sync across any device automatically.');
+
+      if (failed > 0) {
+        alert(`⚠️ Cloud connected, but ${failed} trade(s) could not be uploaded. Check the browser console for the Supabase error.`);
+      } else {
+        alert(`🎉 Cloud connected! ${localTrades.length} trade(s) uploaded to Supabase. Your trades will now sync across devices.`);
+      }
     }
 
     function disconnectCloud() {

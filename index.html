@@ -78,6 +78,9 @@
           <button id="tabDashboardBtn" onclick="switchTab('dashboard')" class="px-5 py-2 text-sm font-semibold rounded-lg bg-slate-900 text-white transition-all shadow-sm">
             Dashboard
           </button>
+          <button id="tabAnalyticsBtn" onclick="switchTab('analytics')" class="px-5 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5">
+            Analytics
+          </button>
           <button id="tabTradeDataBtn" onclick="switchTab('tradeData')" class="px-5 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5">
             Trade data
             <span id="navHoldingsCountBadge" class="hidden text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-bold">0</span>
@@ -337,7 +340,7 @@
                 <div class="text-[11px] text-slate-500 font-semibold flex items-center justify-center gap-1.5 mt-0.5">
                   <span class="w-2 h-2 rounded-full bg-blue-600"></span> You: <b id="cagrTextBadge">0.0%</b> 
                   <span class="text-slate-300">|</span> 
-                  <span class="w-2 h-2 rounded-full bg-amber-500"></span> Nifty: <b>14.2%</b>
+                  <span class="w-2 h-2 rounded-full bg-amber-500"></span> Nifty: <b id="cagrNiftyBadge">14.2%</b>
                 </div>
               </div>
             </div>
@@ -348,12 +351,12 @@
             <div class="bg-slate-50 rounded-xl p-2.5 text-center border border-slate-100">
               <div class="text-[11px] text-slate-500 font-semibold">1 Year Return</div>
               <div class="text-sm font-extrabold text-blue-600 mt-0.5" id="cagr1Yr">0.0%</div>
-              <div class="text-[10px] text-slate-400 mt-0.5">Nifty 50: <span class="font-bold text-slate-600">14.2%</span></div>
+              <div class="text-[10px] text-slate-400 mt-0.5">Nifty 50: <span class="font-bold text-slate-600" id="nifty1YrText">14.2%</span></div>
             </div>
             <div class="bg-slate-50 rounded-xl p-2.5 text-center border border-slate-100">
               <div class="text-[11px] text-slate-500 font-semibold">3 Years CAGR</div>
               <div class="text-sm font-extrabold text-blue-600 mt-0.5" id="cagr3Yr">0.0%</div>
-              <div class="text-[10px] text-slate-400 mt-0.5">Nifty 50: <span class="font-bold text-slate-600">15.8%</span></div>
+              <div class="text-[10px] text-slate-400 mt-0.5">Nifty 50: <span class="font-bold text-slate-600" id="nifty3YrText">15.8%</span></div>
             </div>
           </div>
         </div>
@@ -390,7 +393,472 @@
 
     </main>
 
-    <!-- ================= PAGE 2: TRADE DATA VIEW ================= -->
+    <!-- ================= PAGE 2: ANALYTICS VIEW ================= -->
+    <section id="analyticsView" class="hidden flex flex-col gap-6">
+
+      <!-- SAMPLE SIZE NOTICE / INDICATIVE DATA BANNER (Shown if < 30 closed trades) -->
+      <div id="analyticsSampleSizeNotice" class="hidden bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3.5 text-amber-900 shadow-sm">
+        <div class="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 text-amber-700">
+          <i data-lucide="alert-circle" class="w-5 h-5"></i>
+        </div>
+        <div class="text-xs leading-relaxed">
+          <span class="font-bold text-amber-950">Sample size chhota hai, numbers indicative hain.</span>
+          <span class="text-amber-800/90 block sm:inline sm:ml-1">
+            Abhi is filtered period mein sirf <b id="analyticsSampleSizeCount">0</b> closed trades hain (recommended: 30+ trades). Jaise-jaise sample size badhega, statistical precision behtar hogi.
+          </span>
+        </div>
+      </div>
+
+      <!-- ANALYTICS EMPTY STATE (When 0 closed trades in filtered period) -->
+      <div id="analyticsEmptyState" class="hidden bg-white rounded-2xl p-12 shadow-card border border-slate-100 text-center flex flex-col items-center justify-center">
+        <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3">
+          <i data-lucide="pie-chart" class="w-7 h-7"></i>
+        </div>
+        <h3 class="text-base font-bold text-slate-800">No Closed Trades Found</h3>
+        <p class="text-xs text-slate-400 max-w-sm mt-1">Aapke selected time filter mein koi closed trade nahi hai. Trades log karein ya filter ko "All Time" par switch karein.</p>
+      </div>
+
+      <!-- ANALYTICS CONTENT CONTAINER (Hidden if 0 trades) -->
+      <div id="analyticsContentContainer" class="flex flex-col gap-6">
+
+        <!-- 8 METRICS GRID -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+
+          <!-- CARD 1: Win Rate (%) -->
+          <div class="bg-white rounded-2xl p-5 shadow-card border border-slate-100 flex flex-col justify-between min-h-[140px]">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-500">Win Rate</span>
+              <span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <i data-lucide="target" class="w-4 h-4"></i>
+              </span>
+            </div>
+            <div>
+              <div class="text-3xl font-extrabold text-slate-900 tracking-tight" id="metricWinRate">0.0%</div>
+              <div class="text-xs text-slate-500 mt-1 flex items-center justify-between">
+                <span><b class="text-emerald-600" id="metricWinsCount">0</b> Wins / <b class="text-rose-600" id="metricLossesCount">0</b> Losses</span>
+                <span class="text-[11px] text-slate-400 font-semibold" id="metricTotalClosedCount">0 Trades</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- CARD 2: Avg Win & Avg Loss (Rs) -->
+          <div class="bg-white rounded-2xl p-5 shadow-card border border-slate-100 flex flex-col justify-between min-h-[140px]">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-500">Avg Win & Avg Loss</span>
+              <span class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                <i data-lucide="scale" class="w-4 h-4"></i>
+              </span>
+            </div>
+            <div>
+              <div class="flex items-baseline gap-2">
+                <span class="text-xl font-black text-emerald-600" id="metricAvgWin">₹0</span>
+                <span class="text-slate-300 font-bold">/</span>
+                <span class="text-xl font-black text-rose-600" id="metricAvgLoss">₹0</span>
+              </div>
+              <div class="text-[11px] text-slate-400 mt-1 flex items-center justify-between">
+                <span>Avg Win (Rs)</span>
+                <span>Avg Loss (Rs)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- CARD 3: Risk-Reward Ratio (Avg Win / Avg Loss) -->
+          <div class="bg-white rounded-2xl p-5 shadow-card border border-slate-100 flex flex-col justify-between min-h-[140px]">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-500">Risk-Reward Ratio</span>
+              <span class="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                <i data-lucide="git-commit" class="w-4 h-4"></i>
+              </span>
+            </div>
+            <div>
+              <div class="text-3xl font-extrabold text-slate-900 tracking-tight" id="metricRRRatio">N/A</div>
+              <div class="text-xs text-slate-400 mt-1">
+                Avg Win / Avg Loss (1 : R)
+              </div>
+            </div>
+          </div>
+
+          <!-- CARD 4: Profit Factor (Total Profit / Total Loss) -->
+          <div class="bg-white rounded-2xl p-5 shadow-card border border-slate-100 flex flex-col justify-between min-h-[140px]">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-500">Profit Factor</span>
+              <span class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                <i data-lucide="zap" class="w-4 h-4"></i>
+              </span>
+            </div>
+            <div>
+              <div class="text-3xl font-extrabold text-slate-900 tracking-tight" id="metricProfitFactor">N/A</div>
+              <div class="text-xs text-slate-400 mt-1">
+                Total Profit / Total Loss
+              </div>
+            </div>
+          </div>
+
+          <!-- CARD 5: Expectancy Per Trade -->
+          <div class="bg-white rounded-2xl p-5 shadow-card border border-slate-100 flex flex-col justify-between min-h-[140px]">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-500">Expectancy / Trade</span>
+              <span class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                <i data-lucide="sparkles" class="w-4 h-4"></i>
+              </span>
+            </div>
+            <div>
+              <div class="text-3xl font-extrabold tracking-tight" id="metricExpectancy">₹0</div>
+              <div class="text-[11px] text-slate-400 mt-1">
+                (Win% × Avg Win) - (Loss% × Avg Loss)
+              </div>
+            </div>
+          </div>
+
+          <!-- CARD 6: Max Drawdown (Rs aur %) -->
+          <div class="bg-white rounded-2xl p-5 shadow-card border border-slate-100 flex flex-col justify-between min-h-[140px]">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-500">Max Drawdown</span>
+              <span class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+                <i data-lucide="trending-down" class="w-4 h-4"></i>
+              </span>
+            </div>
+            <div>
+              <div class="text-2xl font-extrabold text-rose-600 tracking-tight" id="metricMaxDrawdown">₹0 (0.0%)</div>
+              <div class="text-xs text-slate-400 mt-1 flex items-center justify-between">
+                <span>Equity peak se max drop</span>
+                <span id="metricPeakEquityText" class="text-[10px] text-slate-400 font-semibold">Peak: ₹0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- CARD 7: Max Consecutive Losses -->
+          <div class="bg-white rounded-2xl p-5 shadow-card border border-slate-100 flex flex-col justify-between min-h-[140px]">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-500">Max Consecutive Losses</span>
+              <span class="w-8 h-8 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center">
+                <i data-lucide="shield-alert" class="w-4 h-4"></i>
+              </span>
+            </div>
+            <div>
+              <div class="text-3xl font-extrabold text-slate-900 tracking-tight" id="metricMaxLossStreak">0</div>
+              <div class="text-xs text-slate-400 mt-1">
+                Losing streak peak in series
+              </div>
+            </div>
+          </div>
+
+          <!-- CARD 8: Net Realized P&L -->
+          <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-5 shadow-card flex flex-col justify-between min-h-[140px]">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold uppercase tracking-wider text-slate-300">Net Realized P&L</span>
+              <span class="w-8 h-8 rounded-xl bg-white/10 text-white flex items-center justify-center font-bold text-sm">
+                ₹
+              </span>
+            </div>
+            <div>
+              <div class="text-3xl font-black tracking-tight" id="metricTotalNetPnl">₹0</div>
+              <div class="text-xs text-slate-300 mt-1 flex items-center justify-between">
+                <span id="metricTotalChargesText">Brokerage: ₹0</span>
+                <span id="metricGrossPnlText" class="text-emerald-400 font-bold">Gross: ₹0</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ================= CALENDAR HEATMAP SECTION ================= -->
+        <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-card border border-slate-100 flex flex-col gap-5">
+          
+          <!-- Calendar Header & Navigation Controls -->
+          <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-100">
+            <div class="flex items-center gap-3">
+              <span class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shadow-sm">
+                <i data-lucide="calendar" class="w-5 h-5"></i>
+              </span>
+              <div>
+                <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                  Monthly Trading Calendar Heatmap
+                </h3>
+                <p class="text-xs text-slate-400">Day-wise closed trades P&L (exit date basis) & activity distribution</p>
+              </div>
+            </div>
+
+            <!-- Month / Year Navigation & Quick Jump -->
+            <div class="flex items-center gap-2 flex-wrap">
+              <div class="flex items-center bg-slate-100 p-1 rounded-xl">
+                <button type="button" onclick="navigateCalendarMonth(-1)" class="w-8 h-8 rounded-lg bg-white shadow-xs hover:bg-slate-200 text-slate-700 flex items-center justify-center transition" title="Previous Month">
+                  <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                </button>
+                <span id="calendarCurrentMonthTitle" class="px-3 text-xs font-bold text-slate-800 min-w-[120px] text-center">October 2026</span>
+                <button type="button" onclick="navigateCalendarMonth(1)" class="w-8 h-8 rounded-lg bg-white shadow-xs hover:bg-slate-200 text-slate-700 flex items-center justify-center transition" title="Next Month">
+                  <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                </button>
+              </div>
+
+              <!-- Year Select Dropdown -->
+              <div class="relative">
+                <select id="calendarYearSelect" onchange="handleCalendarYearChange()" class="appearance-none bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold py-2 pl-3 pr-7 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                  <!-- Dynamically populated -->
+                </select>
+                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 absolute right-2 top-2.5 pointer-events-none"></i>
+              </div>
+
+              <button type="button" onclick="jumpCalendarToCurrentMonth()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
+                Today
+              </button>
+            </div>
+          </div>
+
+          <!-- Monthly Stats Row (Above Calendar Grid) -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50/80 p-3.5 rounded-xl border border-slate-100 text-xs">
+            <div class="flex flex-col">
+              <span class="text-[11px] text-slate-400 font-medium">Month's Net P&L</span>
+              <span class="text-base font-black mt-0.5" id="calMonthNetPnl">₹0</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-[11px] text-slate-400 font-medium">Trading Days</span>
+              <span class="text-base font-bold text-slate-800 mt-0.5" id="calMonthTradingDays">0 Days</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-[11px] text-slate-400 font-medium">Green vs Red Days</span>
+              <span class="text-base font-bold text-slate-800 mt-0.5" id="calMonthGreenRedDays">
+                <b class="text-emerald-600">0G</b> / <b class="text-rose-600">0R</b>
+              </span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-[11px] text-slate-400 font-medium">Days Win Rate</span>
+              <span class="text-base font-bold text-slate-800 mt-0.5" id="calMonthWinRate">0.0%</span>
+            </div>
+          </div>
+
+          <!-- Color Legend -->
+          <div class="flex items-center justify-between text-[11px] text-slate-500 flex-wrap gap-2 pt-1">
+            <span class="font-semibold text-slate-600 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-slate-400"></span> Heatmap Relative Intensity:
+            </span>
+            <div class="flex items-center gap-1.5">
+              <span class="text-rose-600 font-bold">Max Loss</span>
+              <div class="flex items-center gap-0.5">
+                <span class="w-3.5 h-3.5 rounded bg-rose-600" title="High Loss"></span>
+                <span class="w-3.5 h-3.5 rounded bg-rose-400" title="Medium Loss"></span>
+                <span class="w-3.5 h-3.5 rounded bg-rose-200" title="Low Loss"></span>
+                <span class="w-3.5 h-3.5 rounded bg-slate-100 border border-slate-200" title="No Trade / Neutral"></span>
+                <span class="w-3.5 h-3.5 rounded bg-emerald-200" title="Low Profit"></span>
+                <span class="w-3.5 h-3.5 rounded bg-emerald-400" title="Medium Profit"></span>
+                <span class="w-3.5 h-3.5 rounded bg-emerald-600" title="High Profit"></span>
+              </div>
+              <span class="text-emerald-600 font-bold">Max Profit</span>
+            </div>
+          </div>
+
+          <!-- Calendar Grid Container (Mon-Sun + Weekly Total) -->
+          <div class="overflow-x-auto pb-1">
+            <div class="min-w-[700px] w-full flex flex-col gap-1.5">
+              
+              <!-- Weekday Headers (Mon to Sun + Weekly Total) -->
+              <div class="grid grid-cols-8 gap-1.5 text-center text-xs font-bold text-slate-500 uppercase tracking-wider py-1 border-b border-slate-100">
+                <div>Mon</div>
+                <div>Tue</div>
+                <div>Wed</div>
+                <div>Thu</div>
+                <div>Fri</div>
+                <div class="text-slate-400">Sat</div>
+                <div class="text-slate-400">Sun</div>
+                <div class="text-indigo-600 bg-indigo-50/70 rounded-md py-0.5 font-extrabold text-[11px]">Weekly Total</div>
+              </div>
+
+              <!-- Calendar Day Cells Grid (Rendered dynamically week by week) -->
+              <div id="calendarGridBody" class="flex flex-col gap-1.5">
+                <!-- Dynamically generated rows of 8 cells each -->
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Selected Day Trades Detail Drilldown Container (Opened on Day click) -->
+          <div id="calendarSelectedDayContainer" class="hidden mt-2 bg-slate-50 rounded-xl p-4 border border-slate-200 flex flex-col gap-3 transition-all">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <div class="flex items-center gap-2">
+                <span class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
+                  <i data-lucide="list" class="w-4 h-4"></i>
+                </span>
+                <div>
+                  <h4 class="text-xs font-bold text-slate-900" id="calendarSelectedDayTitle">Trades on Date</h4>
+                  <p class="text-[11px] text-slate-400" id="calendarSelectedDaySubtitle">0 Closed Trades</p>
+                </div>
+              </div>
+              <button type="button" onclick="closeCalendarSelectedDay()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-200 transition">
+                <i data-lucide="x" class="w-4 h-4"></i>
+              </button>
+            </div>
+
+            <!-- List of Trades for this selected day -->
+            <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+              <table class="w-full text-left text-xs text-slate-600">
+                <thead class="bg-slate-50 text-slate-500 uppercase font-semibold border-b border-slate-100 text-[10px]">
+                  <tr>
+                    <th class="py-2.5 px-3">Symbol</th>
+                    <th class="py-2.5 px-2">Type</th>
+                    <th class="py-2.5 px-3">Entry (₹)</th>
+                    <th class="py-2.5 px-3">Exit (₹)</th>
+                    <th class="py-2.5 px-2 text-center">Qty</th>
+                    <th class="py-2.5 px-3">Brokerage (₹)</th>
+                    <th class="py-2.5 px-3 text-right">Net P&L (₹)</th>
+                    <th class="py-2.5 px-3 text-right">Return %</th>
+                    <th class="py-2.5 px-3">Setup / Strategy</th>
+                  </tr>
+                </thead>
+                <tbody id="calendarSelectedDayTableBody" class="divide-y divide-slate-100">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- BREAKDOWN SECTION 1: SETUP-WISE -->
+        <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-card border border-slate-100 flex flex-col gap-5">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="crosshair" class="w-4 h-4 text-blue-600"></i>
+                Setup-Wise Performance Breakdown
+              </h3>
+              <p class="text-xs text-slate-400">Existing "Strategy / Setup" field ke hisaab se Net P&L, trades count aur win rate</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            <!-- Setup Table (2 Cols) -->
+            <div class="lg:col-span-2 overflow-x-auto rounded-xl border border-slate-100">
+              <table class="w-full text-left text-xs text-slate-600">
+                <thead class="bg-slate-50 text-slate-500 uppercase font-semibold border-b border-slate-100">
+                  <tr>
+                    <th class="py-3 px-4">Setup / Strategy</th>
+                    <th class="py-3 px-3 text-center">Trades</th>
+                    <th class="py-3 px-3 text-center">Win Rate</th>
+                    <th class="py-3 px-4 text-right">Net P&L (₹)</th>
+                    <th class="py-3 px-4 text-right">Avg P&L / Trade</th>
+                  </tr>
+                </thead>
+                <tbody id="setupBreakdownTableBody" class="divide-y divide-slate-100">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Setup Chart (1 Col) -->
+            <div class="bg-slate-50/60 rounded-xl p-4 border border-slate-100 flex flex-col items-center justify-center min-h-[260px]">
+              <span class="text-xs font-bold text-slate-700 self-start mb-2">Net P&L by Setup (₹)</span>
+              <div class="relative w-full h-56 flex items-center justify-center">
+                <canvas id="setupBarChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BREAKDOWN SECTION 2: WEEKDAY-WISE (MON-FRI) -->
+        <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-card border border-slate-100 flex flex-col gap-5">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="calendar" class="w-4 h-4 text-indigo-600"></i>
+                Weekday-Wise Performance Breakdown (Mon - Fri)
+              </h3>
+              <p class="text-xs text-slate-400">Somvaar se Shukravaar tak trade performance aur profitability pattern</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            <!-- Weekday Table (2 Cols) -->
+            <div class="lg:col-span-2 overflow-x-auto rounded-xl border border-slate-100">
+              <table class="w-full text-left text-xs text-slate-600">
+                <thead class="bg-slate-50 text-slate-500 uppercase font-semibold border-b border-slate-100">
+                  <tr>
+                    <th class="py-3 px-4">Day of Week</th>
+                    <th class="py-3 px-3 text-center">Trades</th>
+                    <th class="py-3 px-3 text-center">Win Rate</th>
+                    <th class="py-3 px-4 text-right">Net P&L (₹)</th>
+                    <th class="py-3 px-4 text-right">Avg P&L / Trade</th>
+                  </tr>
+                </thead>
+                <tbody id="weekdayBreakdownTableBody" class="divide-y divide-slate-100">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Weekday Chart (1 Col) -->
+            <div class="bg-slate-50/60 rounded-xl p-4 border border-slate-100 flex flex-col items-center justify-center min-h-[260px]">
+              <span class="text-xs font-bold text-slate-700 self-start mb-2">Net P&L by Weekday (₹)</span>
+              <div class="relative w-full h-56 flex items-center justify-center">
+                <canvas id="weekdayBarChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BREAKDOWN SECTION 3: CONDITIONAL CE / PE & BUY / SELL-WRITE BREAKDOWN -->
+        <div id="optionsBreakdownContainer" class="hidden flex flex-col gap-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- CE vs PE Card (Conditional) -->
+            <div id="cePeBreakdownCard" class="hidden bg-white rounded-2xl p-5 sm:p-6 shadow-card border border-slate-100 flex flex-col gap-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <i data-lucide="layers" class="w-4 h-4 text-purple-600"></i>
+                    Option Type Breakdown (CE vs PE)
+                  </h3>
+                  <p class="text-xs text-slate-400">Call (CE) vs Put (PE) performance comparison</p>
+                </div>
+              </div>
+              <div class="overflow-x-auto rounded-xl border border-slate-100">
+                <table class="w-full text-left text-xs text-slate-600">
+                  <thead class="bg-slate-50 text-slate-500 uppercase font-semibold border-b border-slate-100">
+                    <tr>
+                      <th class="py-3 px-4">Option Type</th>
+                      <th class="py-3 px-3 text-center">Trades</th>
+                      <th class="py-3 px-3 text-center">Win Rate</th>
+                      <th class="py-3 px-4 text-right">Net P&L (₹)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="cePeTableBody" class="divide-y divide-slate-100"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Buy vs Sell-Write Card (Conditional) -->
+            <div id="sideBreakdownCard" class="hidden bg-white rounded-2xl p-5 sm:p-6 shadow-card border border-slate-100 flex flex-col gap-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <i data-lucide="arrow-left-right" class="w-4 h-4 text-blue-600"></i>
+                    Position Action Breakdown (Buy vs Sell / Write)
+                  </h3>
+                  <p class="text-xs text-slate-400">Long Buyer vs Option Seller / Writer performance</p>
+                </div>
+              </div>
+              <div class="overflow-x-auto rounded-xl border border-slate-100">
+                <table class="w-full text-left text-xs text-slate-600">
+                  <thead class="bg-slate-50 text-slate-500 uppercase font-semibold border-b border-slate-100">
+                    <tr>
+                      <th class="py-3 px-4">Action</th>
+                      <th class="py-3 px-3 text-center">Trades</th>
+                      <th class="py-3 px-3 text-center">Win Rate</th>
+                      <th class="py-3 px-4 text-right">Net P&L (₹)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="sideTableBody" class="divide-y divide-slate-100"></tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ================= PAGE 3: TRADE DATA VIEW ================= -->
     <section id="tradeDataView" class="hidden flex flex-col gap-6">
       
       <!-- Table Controls -->
@@ -771,6 +1239,18 @@
           <label class="block font-semibold text-slate-700 mb-1">Card 4 Title</label>
           <input type="text" id="settingCard4" class="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none" />
         </div>
+        <div class="grid grid-cols-2 gap-3 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Nifty 1-Yr Return (%)</label>
+            <input type="number" step="any" id="settingNifty1Yr" placeholder="14.2" class="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none font-bold text-slate-800" />
+            <p class="text-[10px] text-slate-400 mt-0.5">Gauge & 1-Yr benchmark</p>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Nifty 3-Yr CAGR (%)</label>
+            <input type="number" step="any" id="settingNifty3Yr" placeholder="15.8" class="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none font-bold text-slate-800" />
+            <p class="text-[10px] text-slate-400 mt-0.5">3-Yr CAGR benchmark</p>
+          </div>
+        </div>
 
         <div class="flex items-center justify-between pt-3 border-t border-slate-100">
           <button type="button" onclick="clearAllData()" class="px-3 py-2 rounded-xl text-rose-600 hover:bg-rose-50 font-semibold transition text-xs">Reset All Data</button>
@@ -795,7 +1275,9 @@
       card2Title: 'Current month Return',
       card3Title: 'Till Date Return',
       card4Title: 'Total Portfolio Value',
-      userName: 'Rajan'
+      userName: 'Rajan',
+      nifty1Yr: 14.2,
+      nifty3Yr: 15.8
     };
 
     // Auto-Lock by default: Every time the web app opens/reloads, it starts in locked View-Only mode.
@@ -842,6 +1324,8 @@
     let supabaseClient = null;
     let performanceChartInstance = null;
     let timeWiseChartInstance = null;
+    let setupChartInstance = null;
+    let weekdayChartInstance = null;
     let pendingAdminAction = null;
 
     // ================= ADMIN & READ-ONLY PERMISSION GUARDS =================
@@ -902,7 +1386,7 @@
     function handleAdminPinSubmit(e) {
       e.preventDefault();
       const enteredPin = document.getElementById('adminPinInput').value.trim();
-      const correctPin = state.settings.adminPin || '1234';
+      const correctPin = state.settings.adminPin || '2903';
 
       if (enteredPin === correctPin) {
         state.isAdmin = true;
@@ -1156,24 +1640,42 @@
     function switchTab(tab) {
       state.activeTab = tab;
       const dashboardView = document.getElementById('dashboardView');
+      const analyticsView = document.getElementById('analyticsView');
       const tradeDataView = document.getElementById('tradeDataView');
       const tabDashboardBtn = document.getElementById('tabDashboardBtn');
+      const tabAnalyticsBtn = document.getElementById('tabAnalyticsBtn');
       const tabTradeDataBtn = document.getElementById('tabTradeDataBtn');
       const pageHeading = document.getElementById('pageHeading');
+      const subHeadingText = document.getElementById('subHeadingText');
+
+      const activeClass = "px-5 py-2 text-sm font-semibold rounded-lg bg-slate-900 text-white transition-all shadow-sm flex items-center gap-1.5";
+      const inactiveClass = "px-5 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5";
+
+      dashboardView.classList.add('hidden');
+      if (analyticsView) analyticsView.classList.add('hidden');
+      tradeDataView.classList.add('hidden');
+
+      tabDashboardBtn.className = inactiveClass;
+      if (tabAnalyticsBtn) tabAnalyticsBtn.className = inactiveClass;
+      tabTradeDataBtn.className = inactiveClass;
 
       if (tab === 'dashboard') {
         dashboardView.classList.remove('hidden');
-        tradeDataView.classList.add('hidden');
-        tabDashboardBtn.className = "px-5 py-2 text-sm font-semibold rounded-lg bg-slate-900 text-white transition-all shadow-sm";
-        tabTradeDataBtn.className = "px-5 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5";
+        tabDashboardBtn.className = activeClass;
         pageHeading.innerText = "Trading Overview (INR)";
+        if (subHeadingText) subHeadingText.innerText = "Auto-calculated live from your trade logs & active holdings";
         recalculateAndRenderAll();
+      } else if (tab === 'analytics') {
+        if (analyticsView) analyticsView.classList.remove('hidden');
+        if (tabAnalyticsBtn) tabAnalyticsBtn.className = activeClass;
+        pageHeading.innerText = "Performance Analytics";
+        if (subHeadingText) subHeadingText.innerText = "Deep-dive statistical metrics & breakdowns from closed trades";
+        renderAnalytics();
       } else {
-        dashboardView.classList.add('hidden');
         tradeDataView.classList.remove('hidden');
-        tabTradeDataBtn.className = "px-5 py-2 text-sm font-semibold rounded-lg bg-slate-900 text-white transition-all shadow-sm flex items-center gap-1.5";
-        tabDashboardBtn.className = "px-5 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all";
+        tabTradeDataBtn.className = activeClass;
         pageHeading.innerText = "Trade Log Journal (INR)";
+        if (subHeadingText) subHeadingText.innerText = "Complete history of all logged trades and open holdings";
         renderTradesTable();
       }
     }
@@ -1185,16 +1687,29 @@
       document.getElementById('card3Title').innerText = state.settings.card3Title;
       document.getElementById('card4Title').innerText = state.settings.card4Title;
       document.getElementById('totalCapitalVal').innerText = formatINR(state.settings.initialCapital);
+
+      const n1 = state.settings.nifty1Yr !== undefined ? state.settings.nifty1Yr : 14.2;
+      const n3 = state.settings.nifty3Yr !== undefined ? state.settings.nifty3Yr : 15.8;
+      const cagrNiftyBadge = document.getElementById('cagrNiftyBadge');
+      if (cagrNiftyBadge) cagrNiftyBadge.innerText = `${n1}%`;
+      const nifty1YrText = document.getElementById('nifty1YrText');
+      if (nifty1YrText) nifty1YrText.innerText = `${n1}%`;
+      const nifty3YrText = document.getElementById('nifty3YrText');
+      if (nifty3YrText) nifty3YrText.innerText = `${n3}%`;
     }
 
     function openSettingsModal() {
       document.getElementById('settingTotalCapital').value = state.settings.initialCapital;
-      document.getElementById('settingAdminPin').value = state.settings.adminPin || '1234';
+      document.getElementById('settingAdminPin').value = state.settings.adminPin || '2903';
       document.getElementById('settingUserName').value = 'Rajan';
       document.getElementById('settingCard1').value = state.settings.card1Title;
       document.getElementById('settingCard2').value = state.settings.card2Title;
       document.getElementById('settingCard3').value = state.settings.card3Title;
       document.getElementById('settingCard4').value = state.settings.card4Title;
+      const settingN1 = document.getElementById('settingNifty1Yr');
+      if (settingN1) settingN1.value = state.settings.nifty1Yr !== undefined ? state.settings.nifty1Yr : 14.2;
+      const settingN3 = document.getElementById('settingNifty3Yr');
+      if (settingN3) settingN3.value = state.settings.nifty3Yr !== undefined ? state.settings.nifty3Yr : 15.8;
       document.getElementById('settingsModal').classList.remove('hidden');
     }
 
@@ -1204,15 +1719,19 @@
 
     function handleSaveSettings(e) {
       e.preventDefault();
+      const n1Input = document.getElementById('settingNifty1Yr');
+      const n3Input = document.getElementById('settingNifty3Yr');
       state.settings = {
         ...state.settings,
         initialCapital: parseFloat(document.getElementById('settingTotalCapital').value) || 10000,
-        adminPin: document.getElementById('settingAdminPin').value.trim() || '1234',
+        adminPin: document.getElementById('settingAdminPin').value.trim() || '2903',
         userName: 'Rajan',
         card1Title: document.getElementById('settingCard1').value || 'Total Capital (Investment)',
         card2Title: document.getElementById('settingCard2').value || 'Current month Return',
         card3Title: document.getElementById('settingCard3').value || 'Till Date Return',
         card4Title: document.getElementById('settingCard4').value || 'Total Portfolio Value',
+        nifty1Yr: n1Input && !isNaN(parseFloat(n1Input.value)) ? parseFloat(n1Input.value) : (state.settings.nifty1Yr || 14.2),
+        nifty3Yr: n3Input && !isNaN(parseFloat(n3Input.value)) ? parseFloat(n3Input.value) : (state.settings.nifty3Yr || 15.8)
       };
       localStorage.setItem('tj_live_settings_v5', JSON.stringify(state.settings));
       applySettings();
@@ -1303,6 +1822,7 @@
         type,
         entry,
         exit: isHolding && exitRaw === "" ? null : exit,
+        exitDate: isHolding ? null : date,
         qty,
         charges,
         grossPnl: Number(grossPnl.toFixed(2)),
@@ -1403,6 +1923,7 @@
           updatedObj = {
             ...t,
             exit: exitPrice,
+            exitDate: exitDate,
             charges: exitCharges,
             grossPnl: Number(grossPnl.toFixed(2)),
             pnl: netPnl,
@@ -1784,11 +2305,13 @@
       document.getElementById('cagr1Yr').innerText = `${cagr1Yr >= 0 ? '+' : ''}${cagr1Yr}%`;
       document.getElementById('cagr3Yr').innerText = `${cagr3Yr >= 0 ? '+' : ''}${cagr3Yr}%`;
 
-      drawCAGRGauge(Math.max(0, displayCAGR), 14.2);
+      const niftyVal = (state.settings && state.settings.nifty1Yr !== undefined) ? state.settings.nifty1Yr : 14.2;
+      drawCAGRGauge(Math.max(0, displayCAGR), niftyVal);
 
       renderActiveHoldingsWidget(holdingTrades);
       updatePerformanceStackedChart(closedTrades);
       updateTimeWiseChartGroupedByDate(trades, initialCapital);
+      renderAnalytics();
       updateAdminUI();
     }
 
@@ -2116,6 +2639,905 @@
       });
     }
 
+    // ================= ANALYTICS ENGINE & DERIVED METRICS =================
+    // =========================================================================
+    // RULE: Day grouping closed trades ki exit date par karo, entry date par nahi.
+    // Closed trades ko unki exit date (selling/booking date) par group kiya jata hai
+    // taaki jis din profit/loss realize hua usi din calendar heatmap mein show ho.
+    // =========================================================================
+    function getTradeExitDate(t) {
+      if (t.exitDate) return t.exitDate;
+      if (t.notes && typeof t.notes === 'string') {
+        const match = t.notes.match(/Exited on (\d{4}-\d{2}-\d{2})/);
+        if (match && match[1]) return match[1];
+      }
+      return t.date; // Fallback to trade entry date if exitDate is not distinct
+    }
+
+    let calendarCurrentYear = new Date().getFullYear();
+    let calendarCurrentMonth = new Date().getMonth(); // 0 to 11
+    let calendarSelectedDayDateStr = null;
+
+    const CAL_MONTH_NAMES = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    const CAL_WEEKDAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    function filterTradesByDateRange(tradesList, filterVal) {
+      if (!filterVal || filterVal === 'all_time') return tradesList;
+      const now = new Date();
+      const curYear = now.getFullYear();
+      const curMonth = now.getMonth(); // 0 to 11
+
+      return tradesList.filter(t => {
+        const tradeDateStr = getTradeExitDate(t) || t.date;
+        if (!tradeDateStr) return false;
+        const parts = tradeDateStr.split('-');
+        if (parts.length < 3) return false;
+        const y = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10) - 1;
+
+        if (filterVal === 'this_month') {
+          return y === curYear && m === curMonth;
+        } else if (filterVal === 'last_month') {
+          const prevMonth = curMonth === 0 ? 11 : curMonth - 1;
+          const prevYear = curMonth === 0 ? curYear - 1 : curYear;
+          return y === prevYear && m === prevMonth;
+        } else if (filterVal === 'this_year') {
+          return y === curYear;
+        }
+        return true;
+      });
+    }
+
+    function getFilteredClosedTrades() {
+      const filterSelect = document.getElementById('timeFilter');
+      const filterVal = filterSelect ? filterSelect.value : 'all_time';
+      // Strict rule: Sirf CLOSED trades count karo, open holdings nahi
+      const allClosed = state.trades.filter(t => !t.isHolding && t.status !== 'HOLDING');
+      return filterTradesByDateRange(allClosed, filterVal);
+    }
+
+    function renderAnalytics() {
+      // Sync calendar view with active timeFilter if set to this_month or last_month
+      const filterSelect = document.getElementById('timeFilter');
+      const filterVal = filterSelect ? filterSelect.value : 'all_time';
+      const now = new Date();
+      if (filterVal === 'this_month') {
+        calendarCurrentYear = now.getFullYear();
+        calendarCurrentMonth = now.getMonth();
+      } else if (filterVal === 'last_month') {
+        calendarCurrentMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+        calendarCurrentYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+      }
+
+      const closedTrades = getFilteredClosedTrades();
+      const totalClosed = closedTrades.length;
+
+      // 1. Sample size check (< 30 closed trades)
+      const noticeBanner = document.getElementById('analyticsSampleSizeNotice');
+      const noticeCount = document.getElementById('analyticsSampleSizeCount');
+      if (noticeBanner && noticeCount) {
+        if (totalClosed < 30) {
+          noticeCount.innerText = totalClosed;
+          noticeBanner.classList.remove('hidden');
+        } else {
+          noticeBanner.classList.add('hidden');
+        }
+      }
+
+      // Empty State vs Content
+      const emptyState = document.getElementById('analyticsEmptyState');
+      const contentContainer = document.getElementById('analyticsContentContainer');
+      if (totalClosed === 0) {
+        if (emptyState) emptyState.classList.remove('hidden');
+        if (contentContainer) contentContainer.classList.add('hidden');
+        lucide.createIcons();
+        return;
+      } else {
+        if (emptyState) emptyState.classList.add('hidden');
+        if (contentContainer) contentContainer.classList.remove('hidden');
+      }
+
+      // Wins, Losses, Breakevens
+      const wins = closedTrades.filter(t => (t.pnl || 0) > 0);
+      const losses = closedTrades.filter(t => (t.pnl || 0) < 0);
+      const breakevens = closedTrades.filter(t => (t.pnl || 0) === 0);
+
+      // 1. Win rate (%)
+      const winRatePct = (wins.length / totalClosed) * 100;
+      const lossRatePct = (losses.length / totalClosed) * 100;
+
+      // Totals
+      const totalWinPnl = wins.reduce((sum, t) => sum + (t.pnl || 0), 0);
+      const totalLossPnl = losses.reduce((sum, t) => sum + Math.abs(t.pnl || 0), 0); // Positive value
+      const totalNetPnl = closedTrades.reduce((sum, t) => sum + (t.pnl || 0), 0);
+      const totalCharges = closedTrades.reduce((sum, t) => sum + (t.charges || 0), 0);
+      const totalGrossPnl = closedTrades.reduce((sum, t) => sum + (t.grossPnl !== undefined ? t.grossPnl : ((t.pnl || 0) + (t.charges || 0))), 0);
+
+      // 2. Avg win (Rs) aur Avg loss (Rs)
+      const avgWin = wins.length > 0 ? (totalWinPnl / wins.length) : 0;
+      const avgLoss = losses.length > 0 ? (totalLossPnl / losses.length) : 0;
+
+      // 3. Risk-reward ratio (avg win / avg loss) - Division by zero handled
+      let rrRatioText = 'N/A';
+      if (avgLoss > 0) {
+        const rr = avgWin / avgLoss;
+        rrRatioText = `1 : ${rr.toFixed(2)}`;
+      } else {
+        rrRatioText = 'N/A';
+      }
+
+      // 4. Profit factor (total profit / total loss) - Division by zero handled
+      let profitFactorText = 'N/A';
+      if (totalLossPnl > 0) {
+        const pf = totalWinPnl / totalLossPnl;
+        profitFactorText = pf.toFixed(2);
+      } else {
+        profitFactorText = 'N/A';
+      }
+
+      // 5. Expectancy per trade = (win rate x avg win) - (loss rate x avg loss)
+      const wFraction = wins.length / totalClosed;
+      const lFraction = losses.length / totalClosed;
+      const expectancy = (wFraction * avgWin) - (lFraction * avgLoss);
+
+      // 6. Max drawdown (Rs aur %) from equity curve peak
+      const sortedTrades = [...closedTrades].sort((a, b) => new Date(a.date) - new Date(b.date));
+      const initialCapital = state.settings.initialCapital || 10000;
+      let runningEquity = initialCapital;
+      let peakEquity = initialCapital;
+      let maxDrawdownRs = 0;
+      let maxDrawdownPct = 0;
+
+      sortedTrades.forEach(t => {
+        runningEquity += (t.pnl || 0);
+        if (runningEquity > peakEquity) {
+          peakEquity = runningEquity;
+        }
+        const ddRs = peakEquity - runningEquity;
+        if (ddRs > maxDrawdownRs) {
+          maxDrawdownRs = ddRs;
+        }
+        const ddPct = peakEquity > 0 ? (ddRs / peakEquity) * 100 : 0;
+        if (ddPct > maxDrawdownPct) {
+          maxDrawdownPct = ddPct;
+        }
+      });
+
+      // 7. Max consecutive losses
+      let maxLossStreak = 0;
+      let currentLossStreak = 0;
+      sortedTrades.forEach(t => {
+        if ((t.pnl || 0) < 0) {
+          currentLossStreak += 1;
+          if (currentLossStreak > maxLossStreak) {
+            maxLossStreak = currentLossStreak;
+          }
+        } else if ((t.pnl || 0) > 0) {
+          currentLossStreak = 0;
+        }
+      });
+
+      // Update Metric Cards in UI
+      const winRateEl = document.getElementById('metricWinRate');
+      if (winRateEl) winRateEl.innerText = `${winRatePct.toFixed(1)}%`;
+      const winsCountEl = document.getElementById('metricWinsCount');
+      if (winsCountEl) winsCountEl.innerText = wins.length;
+      const lossesCountEl = document.getElementById('metricLossesCount');
+      if (lossesCountEl) lossesCountEl.innerText = losses.length;
+      const totalClosedCountEl = document.getElementById('metricTotalClosedCount');
+      if (totalClosedCountEl) totalClosedCountEl.innerText = `${totalClosed} Closed`;
+
+      const avgWinEl = document.getElementById('metricAvgWin');
+      if (avgWinEl) avgWinEl.innerText = formatINR(avgWin);
+      const avgLossEl = document.getElementById('metricAvgLoss');
+      if (avgLossEl) avgLossEl.innerText = formatINR(avgLoss);
+
+      const rrEl = document.getElementById('metricRRRatio');
+      if (rrEl) rrEl.innerText = rrRatioText;
+
+      const pfEl = document.getElementById('metricProfitFactor');
+      if (pfEl) pfEl.innerText = profitFactorText;
+
+      const expEl = document.getElementById('metricExpectancy');
+      if (expEl) {
+        expEl.innerText = formatINR(expectancy, true);
+        if (expectancy >= 0) {
+          expEl.className = "text-3xl font-extrabold text-emerald-600 tracking-tight";
+        } else {
+          expEl.className = "text-3xl font-extrabold text-rose-600 tracking-tight";
+        }
+      }
+
+      const ddEl = document.getElementById('metricMaxDrawdown');
+      if (ddEl) ddEl.innerText = `${formatINR(maxDrawdownRs)} (${maxDrawdownPct.toFixed(1)}%)`;
+      const peakEl = document.getElementById('metricPeakEquityText');
+      if (peakEl) peakEl.innerText = `Peak: ${formatINR(peakEquity)}`;
+
+      const streakEl = document.getElementById('metricMaxLossStreak');
+      if (streakEl) streakEl.innerText = `${maxLossStreak} Trade${maxLossStreak === 1 ? '' : 's'}`;
+
+      const netPnlEl = document.getElementById('metricTotalNetPnl');
+      if (netPnlEl) {
+        netPnlEl.innerText = formatINR(totalNetPnl, true);
+        if (totalNetPnl >= 0) {
+          netPnlEl.className = "text-3xl font-black tracking-tight text-emerald-400";
+        } else {
+          netPnlEl.className = "text-3xl font-black tracking-tight text-rose-400";
+        }
+      }
+      const chargesEl = document.getElementById('metricTotalChargesText');
+      if (chargesEl) chargesEl.innerText = `Brokerage: ${formatINR(totalCharges)}`;
+      const grossEl = document.getElementById('metricGrossPnlText');
+      if (grossEl) grossEl.innerText = `Gross: ${formatINR(totalGrossPnl, true)}`;
+
+      // Render Calendar Heatmap
+      renderCalendarHeatmap();
+
+      // Render Breakdowns
+      renderSetupBreakdown(closedTrades);
+      renderWeekdayBreakdown(closedTrades);
+      renderConditionalOptionBreakdowns(closedTrades);
+
+      lucide.createIcons();
+    }
+
+    function navigateCalendarMonth(delta) {
+      calendarCurrentMonth += delta;
+      if (calendarCurrentMonth < 0) {
+        calendarCurrentMonth = 11;
+        calendarCurrentYear -= 1;
+      } else if (calendarCurrentMonth > 11) {
+        calendarCurrentMonth = 0;
+        calendarCurrentYear += 1;
+      }
+      renderCalendarHeatmap();
+    }
+
+    function handleCalendarYearChange() {
+      const select = document.getElementById('calendarYearSelect');
+      if (select) {
+        calendarCurrentYear = parseInt(select.value, 10);
+        renderCalendarHeatmap();
+      }
+    }
+
+    function jumpCalendarToCurrentMonth() {
+      const now = new Date();
+      calendarCurrentYear = now.getFullYear();
+      calendarCurrentMonth = now.getMonth();
+      renderCalendarHeatmap();
+    }
+
+    function renderCalendarHeatmap() {
+      const titleEl = document.getElementById('calendarCurrentMonthTitle');
+      if (titleEl) {
+        titleEl.innerText = `${CAL_MONTH_NAMES[calendarCurrentMonth]} ${calendarCurrentYear}`;
+      }
+
+      // Populate year select dropdown with existing years from trades and current year
+      const yearSelect = document.getElementById('calendarYearSelect');
+      if (yearSelect) {
+        const yearsSet = new Set([new Date().getFullYear(), calendarCurrentYear]);
+        state.trades.forEach(t => {
+          const dStr = getTradeExitDate(t);
+          if (dStr && dStr.length >= 4) {
+            const y = parseInt(dStr.slice(0, 4), 10);
+            if (!isNaN(y)) yearsSet.add(y);
+          }
+        });
+        const sortedYears = Array.from(yearsSet).sort((a, b) => b - a);
+        yearSelect.innerHTML = sortedYears.map(y => `
+          <option value="${y}" ${y === calendarCurrentYear ? 'selected' : ''}>${y}</option>
+        `).join('');
+      }
+
+      // Strict rule: Sirf CLOSED trades count karo, open holdings nahi
+      const closedTrades = state.trades.filter(t => !t.isHolding && t.status !== 'HOLDING');
+
+      // Group closed trades by exit date (Rule requirement)
+      const dayMap = {};
+      closedTrades.forEach(t => {
+        const exitDate = getTradeExitDate(t);
+        if (!exitDate) return;
+        if (!dayMap[exitDate]) {
+          dayMap[exitDate] = { dateStr: exitDate, netPnl: 0, trades: [], wins: 0, losses: 0, breakevens: 0 };
+        }
+        dayMap[exitDate].netPnl += (t.pnl || 0);
+        dayMap[exitDate].trades.push(t);
+        if ((t.pnl || 0) > 0) dayMap[exitDate].wins += 1;
+        else if ((t.pnl || 0) < 0) dayMap[exitDate].losses += 1;
+        else dayMap[exitDate].breakevens += 1;
+      });
+
+      // Days count in current calendar month
+      const daysInMonth = new Date(calendarCurrentYear, calendarCurrentMonth + 1, 0).getDate();
+
+      // Find max daily profit and max daily loss for relative shading scale in this month
+      let maxMonthProfit = 0;
+      let maxMonthLoss = 0; // Positive magnitude
+      let monthTotalPnl = 0;
+      let monthTradingDaysCount = 0;
+      let monthGreenDaysCount = 0;
+      let monthRedDaysCount = 0;
+
+      for (let dayNum = 1; dayNum <= daysInMonth; dayNum++) {
+        const dateStr = `${calendarCurrentYear}-${String(calendarCurrentMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+        const dayData = dayMap[dateStr];
+        if (dayData && dayData.trades.length > 0) {
+          monthTotalPnl += dayData.netPnl;
+          monthTradingDaysCount += 1;
+          if (dayData.netPnl > 0) {
+            monthGreenDaysCount += 1;
+            if (dayData.netPnl > maxMonthProfit) maxMonthProfit = dayData.netPnl;
+          } else if (dayData.netPnl < 0) {
+            monthRedDaysCount += 1;
+            const absLoss = Math.abs(dayData.netPnl);
+            if (absLoss > maxMonthLoss) maxMonthLoss = absLoss;
+          }
+        }
+      }
+
+      // Update Monthly Header Stats
+      const monthNetPnlEl = document.getElementById('calMonthNetPnl');
+      if (monthNetPnlEl) {
+        monthNetPnlEl.innerText = formatINR(monthTotalPnl, true);
+        monthNetPnlEl.className = monthTotalPnl >= 0 ? 'text-base font-black mt-0.5 text-emerald-600' : 'text-base font-black mt-0.5 text-rose-600';
+      }
+      const tradingDaysEl = document.getElementById('calMonthTradingDays');
+      if (tradingDaysEl) tradingDaysEl.innerText = `${monthTradingDaysCount} Days`;
+      const greenRedDaysEl = document.getElementById('calMonthGreenRedDays');
+      if (greenRedDaysEl) {
+        greenRedDaysEl.innerHTML = `<b class="text-emerald-600">${monthGreenDaysCount}G</b> / <b class="text-rose-600">${monthRedDaysCount}R</b>`;
+      }
+      const winRateEl = document.getElementById('calMonthWinRate');
+      if (winRateEl) {
+        const wr = monthTradingDaysCount > 0 ? ((monthGreenDaysCount / monthTradingDaysCount) * 100).toFixed(1) : '0.0';
+        winRateEl.innerText = `${wr}%`;
+      }
+
+      // First day of month (Mon-Sun layout)
+      // JS getDay(): 0 = Sun, 1 = Mon, ..., 6 = Sat
+      const firstDayWeekday = new Date(calendarCurrentYear, calendarCurrentMonth, 1).getDay();
+      // In Mon-Sun grid: Mon = 0, Tue = 1, ..., Sat = 5, Sun = 6
+      const startDayOffset = firstDayWeekday === 0 ? 6 : firstDayWeekday - 1;
+
+      // Construct weeks rows
+      const gridBody = document.getElementById('calendarGridBody');
+      if (!gridBody) return;
+
+      let currentDayNum = 1;
+      let rowsHtml = '';
+      const totalWeeks = Math.ceil((startDayOffset + daysInMonth) / 7);
+
+      for (let weekIdx = 0; weekIdx < totalWeeks; weekIdx++) {
+        let weekNetPnl = 0;
+        let weekTradeCount = 0;
+        let daysInThisWeekCount = 0;
+        let weekCellsHtml = '';
+
+        for (let weekdayIdx = 0; weekdayIdx < 7; weekdayIdx++) {
+          const slotIdx = (weekIdx * 7) + weekdayIdx;
+          if (slotIdx < startDayOffset || currentDayNum > daysInMonth) {
+            // Empty / outside of month cell
+            weekCellsHtml += `
+              <div class="h-16 sm:h-20 rounded-xl bg-slate-50/40 border border-dashed border-slate-100 flex items-center justify-center pointer-events-none opacity-40"></div>
+            `;
+          } else {
+            // Valid month day
+            const dNum = currentDayNum;
+            const dateStr = `${calendarCurrentYear}-${String(calendarCurrentMonth + 1).padStart(2, '0')}-${String(dNum).padStart(2, '0')}`;
+            const dayData = dayMap[dateStr];
+            const hasTrades = Boolean(dayData && dayData.trades.length > 0);
+            const netPnl = hasTrades ? dayData.netPnl : 0;
+            const tradesCount = hasTrades ? dayData.trades.length : 0;
+            const winsCount = hasTrades ? dayData.wins : 0;
+            const lossesCount = hasTrades ? dayData.losses : 0;
+
+            if (hasTrades) {
+              weekNetPnl += netPnl;
+              weekTradeCount += tradesCount;
+              daysInThisWeekCount += 1;
+            }
+
+            // Relative Shading Calculation
+            let boxBgStyle = '';
+            let boxClass = '';
+            let textClass = 'text-slate-700';
+            let pnlDisplayHtml = '';
+
+            if (hasTrades) {
+              if (netPnl > 0) {
+                const ratio = maxMonthProfit > 0 ? (netPnl / maxMonthProfit) : 1;
+                const alpha = (0.18 + (ratio * 0.77)).toFixed(2);
+                boxBgStyle = `background-color: rgba(16, 185, 129, ${alpha});`;
+                boxClass = 'border-emerald-300 shadow-xs ring-1 ring-emerald-400/30';
+                textClass = alpha >= 0.55 ? 'text-white' : 'text-emerald-950 font-bold';
+              } else if (netPnl < 0) {
+                const ratio = maxMonthLoss > 0 ? (Math.abs(netPnl) / maxMonthLoss) : 1;
+                const alpha = (0.18 + (ratio * 0.77)).toFixed(2);
+                boxBgStyle = `background-color: rgba(244, 63, 94, ${alpha});`;
+                boxClass = 'border-rose-300 shadow-xs ring-1 ring-rose-400/30';
+                textClass = alpha >= 0.55 ? 'text-white' : 'text-rose-950 font-bold';
+              } else {
+                boxClass = 'bg-slate-200 border-slate-300 text-slate-800';
+              }
+
+              // Compact formatted P&L text (e.g. "+1.5k" or "-450")
+              const absVal = Math.abs(netPnl);
+              let compactAmount = '';
+              if (absVal >= 100000) compactAmount = (absVal / 100000).toFixed(1) + 'L';
+              else if (absVal >= 1000) compactAmount = (absVal / 1000).toFixed(1) + 'k';
+              else compactAmount = Math.round(absVal).toString();
+
+              const sign = netPnl > 0 ? '+' : (netPnl < 0 ? '-' : '');
+              const compactText = `${sign}₹${compactAmount}`;
+
+              pnlDisplayHtml = `
+                <div class="mt-auto text-right">
+                  <span class="inline-block text-[10px] sm:text-[11px] font-extrabold tracking-tight px-1 py-0.5 rounded bg-black/15 backdrop-blur-xs">
+                    ${compactText}
+                  </span>
+                  <div class="text-[9px] opacity-80 font-semibold leading-tight hidden sm:block">
+                    ${tradesCount}T (${winsCount}W/${lossesCount}L)
+                  </div>
+                </div>
+              `;
+            } else {
+              // No trade
+              boxClass = 'bg-slate-50 border-slate-100 text-slate-400 hover:bg-slate-100/70';
+            }
+
+            // Is today?
+            const today = new Date();
+            const isToday = (today.getFullYear() === calendarCurrentYear && today.getMonth() === calendarCurrentMonth && today.getDate() === dNum);
+            const todayIndicator = isToday ? '<span class="w-1.5 h-1.5 rounded-full bg-blue-600 animate-ping absolute top-1.5 right-1.5" title="Today"></span>' : '';
+
+            // Tooltip title
+            const weekdayName = CAL_WEEKDAY_NAMES[weekdayIdx];
+            const tooltipTitle = hasTrades 
+              ? `${dNum} ${CAL_MONTH_NAMES[calendarCurrentMonth]} ${calendarCurrentYear} (${weekdayName})\nNet P&L: ${formatINR(netPnl, true)}\nTrades: ${tradesCount} (${winsCount} Wins, ${lossesCount} Losses)\nClick to view trades list`
+              : `${dNum} ${CAL_MONTH_NAMES[calendarCurrentMonth]} ${calendarCurrentYear} (${weekdayName})\nNo closed trades on this date`;
+
+            weekCellsHtml += `
+              <div 
+                onclick="${hasTrades ? `selectCalendarDay('${dateStr}')` : `selectCalendarDay('${dateStr}', false)`}"
+                title="${tooltipTitle}"
+                style="${boxBgStyle}"
+                class="relative h-16 sm:h-20 p-1.5 sm:p-2 rounded-xl border flex flex-col justify-between transition-all select-none ${boxClass} ${textClass} ${hasTrades ? 'cursor-pointer hover:scale-[1.03] active:scale-95' : 'cursor-default'}"
+              >
+                ${todayIndicator}
+                <div class="flex items-center justify-between">
+                  <span class="text-xs sm:text-sm font-black">${dNum}</span>
+                  ${hasTrades ? `<span class="w-1.5 h-1.5 rounded-full ${netPnl >= 0 ? 'bg-emerald-400' : 'bg-rose-400'} sm:hidden"></span>` : ''}
+                </div>
+                ${pnlDisplayHtml}
+              </div>
+            `;
+            currentDayNum++;
+          }
+        }
+
+        // Weekly Total Cell (8th column)
+        const isPosWeek = weekNetPnl >= 0;
+        const weekPnlFormatted = weekTradeCount > 0 ? formatINR(weekNetPnl, true) : '₹0';
+        const weeklyCellClass = weekTradeCount > 0 
+          ? (isPosWeek ? 'bg-emerald-50/70 border-emerald-200 text-emerald-800' : 'bg-rose-50/70 border-rose-200 text-rose-800')
+          : 'bg-slate-50/60 border-slate-100 text-slate-400';
+
+        const weeklyCellHtml = `
+          <div class="h-16 sm:h-20 p-2 rounded-xl border flex flex-col justify-between text-right transition ${weeklyCellClass}">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Week ${weekIdx + 1}</span>
+            <div class="mt-auto">
+              <span class="text-xs sm:text-sm font-extrabold block tracking-tight leading-tight">
+                ${weekPnlFormatted}
+              </span>
+              <span class="text-[9px] font-semibold text-slate-400">
+                ${weekTradeCount} Trade${weekTradeCount === 1 ? '' : 's'}
+              </span>
+            </div>
+          </div>
+        `;
+
+        rowsHtml += `
+          <div class="grid grid-cols-8 gap-1.5">
+            ${weekCellsHtml}
+            ${weeklyCellHtml}
+          </div>
+        `;
+      }
+
+      gridBody.innerHTML = rowsHtml;
+
+      // If a day was selected, re-render its detail table
+      if (calendarSelectedDayDateStr) {
+        selectCalendarDay(calendarSelectedDayDateStr, Boolean(dayMap[calendarSelectedDayDateStr]));
+      }
+
+      lucide.createIcons();
+    }
+
+    function selectCalendarDay(dateStr, hasData = true) {
+      calendarSelectedDayDateStr = dateStr;
+      const container = document.getElementById('calendarSelectedDayContainer');
+      const titleEl = document.getElementById('calendarSelectedDayTitle');
+      const subEl = document.getElementById('calendarSelectedDaySubtitle');
+      const tbody = document.getElementById('calendarSelectedDayTableBody');
+      if (!container || !titleEl || !subEl || !tbody) return;
+
+      // Filter closed trades whose exit date matches dateStr
+      const dayTrades = state.trades.filter(t => !t.isHolding && t.status !== 'HOLDING' && getTradeExitDate(t) === dateStr);
+      const formattedDate = dateStr;
+
+      if (dayTrades.length === 0) {
+        titleEl.innerText = `Trades closed on ${formattedDate}`;
+        subEl.innerText = 'No closed trades recorded on this date';
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" class="py-6 text-center text-slate-400 text-xs">
+              Is din koi trade close/exit nahi hua tha.
+            </td>
+          </tr>
+        `;
+        container.classList.remove('hidden');
+        container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        lucide.createIcons();
+        return;
+      }
+
+      const totalDayPnl = dayTrades.reduce((acc, t) => acc + (t.pnl || 0), 0);
+      const totalDayCharges = dayTrades.reduce((acc, t) => acc + (t.charges || 0), 0);
+      const isPos = totalDayPnl >= 0;
+
+      titleEl.innerHTML = `Closed Trades on <span class="text-blue-600">${formattedDate}</span> — Net P&L: <span class="${isPos ? 'text-emerald-600' : 'text-rose-600'} font-extrabold">${formatINR(totalDayPnl, true)}</span>`;
+      subEl.innerText = `${dayTrades.length} Closed Trade${dayTrades.length === 1 ? '' : 's'} • Total Brokerage/Tax: ${formatINR(totalDayCharges)}`;
+
+      tbody.innerHTML = dayTrades.map(t => {
+        const isWin = (t.pnl || 0) >= 0;
+        return `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="py-2.5 px-3 font-bold text-slate-900">${t.symbol}</td>
+            <td class="py-2.5 px-2">
+              <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${t.type === 'LONG' ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-600'}">
+                ${t.type}
+              </span>
+            </td>
+            <td class="py-2.5 px-3 font-semibold">${formatINR(t.entry)}</td>
+            <td class="py-2.5 px-3 font-semibold">${formatINR(t.exit)}</td>
+            <td class="py-2.5 px-2 text-center font-semibold">${t.qty}</td>
+            <td class="py-2.5 px-3 font-semibold text-amber-700">${formatINR(t.charges || 0)}</td>
+            <td class="py-2.5 px-3 text-right font-bold ${isWin ? 'text-emerald-600' : 'text-rose-600'}">
+              ${formatINR(t.pnl, true)}
+            </td>
+            <td class="py-2.5 px-3 text-right font-semibold ${isWin ? 'text-emerald-600' : 'text-rose-600'}">
+              ${(t.returnPct >= 0 ? '+' : '') + t.returnPct + '%'}
+            </td>
+            <td class="py-2.5 px-3 text-slate-600 font-medium">${t.strategy || '-'}</td>
+          </tr>
+        `;
+      }).join('');
+
+      container.classList.remove('hidden');
+      container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      lucide.createIcons();
+    }
+
+    function closeCalendarSelectedDay() {
+      calendarSelectedDayDateStr = null;
+      const container = document.getElementById('calendarSelectedDayContainer');
+      if (container) container.classList.add('hidden');
+    }
+
+    function renderSetupBreakdown(closedTrades) {
+      const setupMap = {};
+      closedTrades.forEach(t => {
+        const setup = (t.strategy && t.strategy.trim()) ? t.strategy.trim() : 'Unspecified';
+        if (!setupMap[setup]) {
+          setupMap[setup] = { name: setup, count: 0, wins: 0, losses: 0, netPnl: 0 };
+        }
+        setupMap[setup].count += 1;
+        if ((t.pnl || 0) > 0) setupMap[setup].wins += 1;
+        else if ((t.pnl || 0) < 0) setupMap[setup].losses += 1;
+        setupMap[setup].netPnl += (t.pnl || 0);
+      });
+
+      const setups = Object.values(setupMap).sort((a, b) => b.netPnl - a.netPnl);
+      const tbody = document.getElementById('setupBreakdownTableBody');
+      if (tbody) {
+        tbody.innerHTML = setups.map(s => {
+          const winRate = s.count > 0 ? ((s.wins / s.count) * 100).toFixed(1) : '0.0';
+          const avgPnl = s.count > 0 ? (s.netPnl / s.count) : 0;
+          const isPos = s.netPnl >= 0;
+          return `
+            <tr class="hover:bg-slate-50/80 transition">
+              <td class="py-3 px-4 font-bold text-slate-800 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full ${isPos ? 'bg-emerald-500' : 'bg-rose-500'}"></span>
+                ${s.name}
+              </td>
+              <td class="py-3 px-3 text-center font-semibold text-slate-700">${s.count}</td>
+              <td class="py-3 px-3 text-center">
+                <span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold ${parseFloat(winRate) >= 50 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}">
+                  ${winRate}%
+                </span>
+              </td>
+              <td class="py-3 px-4 text-right font-bold ${isPos ? 'text-emerald-600' : 'text-rose-600'}">
+                ${formatINR(s.netPnl, true)}
+              </td>
+              <td class="py-3 px-4 text-right font-semibold ${avgPnl >= 0 ? 'text-slate-700' : 'text-rose-600'}">
+                ${formatINR(avgPnl, true)}
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // Render Setup Bar Chart
+      const canvas = document.getElementById('setupBarChart');
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        if (setupChartInstance) setupChartInstance.destroy();
+        setupChartInstance = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: setups.map(s => s.name.length > 14 ? s.name.substring(0, 12) + '..' : s.name),
+            datasets: [{
+              label: 'Net P&L',
+              data: setups.map(s => s.netPnl),
+              backgroundColor: setups.map(s => s.netPnl >= 0 ? '#10b981' : '#f43f5e'),
+              borderRadius: 6,
+              barThickness: 20
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              datalabels: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (context) => ` Net P&L: ${formatINR(context.raw, true)}`
+                }
+              }
+            },
+            scales: {
+              x: { grid: { display: false }, ticks: { font: { size: 10, weight: '600' }, color: '#64748b' } },
+              y: {
+                grid: { color: '#f1f5f9' },
+                ticks: {
+                  callback: (v) => formatINR(v),
+                  color: '#94a3b8',
+                  font: { size: 10 }
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    function renderWeekdayBreakdown(closedTrades) {
+      const weekdayStats = {
+        1: { name: 'Monday', shortName: 'Mon', count: 0, wins: 0, netPnl: 0 },
+        2: { name: 'Tuesday', shortName: 'Tue', count: 0, wins: 0, netPnl: 0 },
+        3: { name: 'Wednesday', shortName: 'Wed', count: 0, wins: 0, netPnl: 0 },
+        4: { name: 'Thursday', shortName: 'Thu', count: 0, wins: 0, netPnl: 0 },
+        5: { name: 'Friday', shortName: 'Fri', count: 0, wins: 0, netPnl: 0 }
+      };
+
+      closedTrades.forEach(t => {
+        if (!t.date) return;
+        const parts = t.date.split('-');
+        if (parts.length < 3) return;
+        const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        const dayIdx = d.getDay();
+        if (weekdayStats[dayIdx]) {
+          weekdayStats[dayIdx].count += 1;
+          if ((t.pnl || 0) > 0) weekdayStats[dayIdx].wins += 1;
+          weekdayStats[dayIdx].netPnl += (t.pnl || 0);
+        }
+      });
+
+      const daysList = [weekdayStats[1], weekdayStats[2], weekdayStats[3], weekdayStats[4], weekdayStats[5]];
+      const tbody = document.getElementById('weekdayBreakdownTableBody');
+      if (tbody) {
+        tbody.innerHTML = daysList.map(day => {
+          const winRate = day.count > 0 ? ((day.wins / day.count) * 100).toFixed(1) : '0.0';
+          const avgPnl = day.count > 0 ? (day.netPnl / day.count) : 0;
+          const isPos = day.netPnl >= 0;
+          return `
+            <tr class="hover:bg-slate-50/80 transition">
+              <td class="py-3 px-4 font-bold text-slate-800">${day.name}</td>
+              <td class="py-3 px-3 text-center font-semibold text-slate-700">${day.count}</td>
+              <td class="py-3 px-3 text-center">
+                <span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold ${day.count === 0 ? 'text-slate-400' : (parseFloat(winRate) >= 50 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700')}">
+                  ${day.count === 0 ? '-' : `${winRate}%`}
+                </span>
+              </td>
+              <td class="py-3 px-4 text-right font-bold ${day.count === 0 ? 'text-slate-400' : (isPos ? 'text-emerald-600' : 'text-rose-600')}">
+                ${day.count === 0 ? '₹0' : formatINR(day.netPnl, true)}
+              </td>
+              <td class="py-3 px-4 text-right font-semibold ${day.count === 0 ? 'text-slate-400' : (avgPnl >= 0 ? 'text-slate-700' : 'text-rose-600')}">
+                ${day.count === 0 ? '₹0' : formatINR(avgPnl, true)}
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // Render Weekday Bar Chart
+      const canvas = document.getElementById('weekdayBarChart');
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        if (weekdayChartInstance) weekdayChartInstance.destroy();
+        weekdayChartInstance = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: daysList.map(d => d.shortName),
+            datasets: [{
+              label: 'Net P&L',
+              data: daysList.map(d => d.netPnl),
+              backgroundColor: daysList.map(d => d.netPnl >= 0 ? '#10b981' : '#f43f5e'),
+              borderRadius: 6,
+              barThickness: 22
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              datalabels: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (context) => ` Net P&L: ${formatINR(context.raw, true)}`
+                }
+              }
+            },
+            scales: {
+              x: { grid: { display: false }, ticks: { font: { size: 11, weight: '600' }, color: '#64748b' } },
+              y: {
+                grid: { color: '#f1f5f9' },
+                ticks: {
+                  callback: (v) => formatINR(v),
+                  color: '#94a3b8',
+                  font: { size: 10 }
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    function renderConditionalOptionBreakdowns(closedTrades) {
+      const container = document.getElementById('optionsBreakdownContainer');
+      const cePeCard = document.getElementById('cePeBreakdownCard');
+      const sideCard = document.getElementById('sideBreakdownCard');
+      const cePeTbody = document.getElementById('cePeTableBody');
+      const sideTbody = document.getElementById('sideTableBody');
+
+      let hasCePe = false;
+      const cePeMap = {
+        'CE': { name: 'Call (CE)', count: 0, wins: 0, netPnl: 0 },
+        'PE': { name: 'Put (PE)', count: 0, wins: 0, netPnl: 0 }
+      };
+
+      let hasSide = false;
+      const sideMap = {
+        'BUY': { name: 'Buy (Long)', count: 0, wins: 0, netPnl: 0 },
+        'SELL': { name: 'Sell / Write (Short)', count: 0, wins: 0, netPnl: 0 }
+      };
+
+      closedTrades.forEach(t => {
+        // CE / PE Detection
+        let detectedType = null;
+        if (t.optionType) {
+          const ot = t.optionType.toUpperCase();
+          if (ot.includes('CE')) detectedType = 'CE';
+          else if (ot.includes('PE')) detectedType = 'PE';
+        }
+        if (!detectedType && t.symbol) {
+          const sym = t.symbol.toUpperCase();
+          if (/\bCE\b/.test(sym) || sym.endsWith('CE')) detectedType = 'CE';
+          else if (/\bPE\b/.test(sym) || sym.endsWith('PE')) detectedType = 'PE';
+        }
+
+        if (detectedType && cePeMap[detectedType]) {
+          hasCePe = true;
+          cePeMap[detectedType].count += 1;
+          if ((t.pnl || 0) > 0) cePeMap[detectedType].wins += 1;
+          cePeMap[detectedType].netPnl += (t.pnl || 0);
+        }
+
+        // Buy vs Sell / Write Detection
+        let detectedSide = null;
+        if (t.orderAction || t.side || t.action) {
+          const act = (t.orderAction || t.side || t.action).toUpperCase();
+          if (act.includes('WRITE') || act.includes('SELL')) detectedSide = 'SELL';
+          else if (act.includes('BUY')) detectedSide = 'BUY';
+        }
+        if (!detectedSide && t.type) {
+          const typ = t.type.toUpperCase();
+          if (typ === 'SHORT' || typ === 'WRITE' || typ === 'SELL') detectedSide = 'SELL';
+          else if (typ === 'LONG' || typ === 'BUY') detectedSide = 'BUY';
+        }
+        if (!detectedSide && t.strategy) {
+          const strat = t.strategy.toUpperCase();
+          if (strat.includes('WRITE') || strat.includes('WRITING') || strat.includes('SELL')) detectedSide = 'SELL';
+          else if (strat.includes('BUY')) detectedSide = 'BUY';
+        }
+
+        if (detectedSide && sideMap[detectedSide]) {
+          hasSide = true;
+          sideMap[detectedSide].count += 1;
+          if ((t.pnl || 0) > 0) sideMap[detectedSide].wins += 1;
+          sideMap[detectedSide].netPnl += (t.pnl || 0);
+        }
+      });
+
+      if (!hasCePe && !hasSide) {
+        if (container) container.classList.add('hidden');
+        if (cePeCard) cePeCard.classList.add('hidden');
+        if (sideCard) sideCard.classList.add('hidden');
+        return;
+      }
+
+      if (container) container.classList.remove('hidden');
+
+      if (hasCePe && cePeCard && cePeTbody) {
+        cePeCard.classList.remove('hidden');
+        cePeTbody.innerHTML = ['CE', 'PE'].map(key => {
+          const item = cePeMap[key];
+          const winRate = item.count > 0 ? ((item.wins / item.count) * 100).toFixed(1) : '0.0';
+          const isPos = item.netPnl >= 0;
+          return `
+            <tr class="hover:bg-slate-50/80 transition">
+              <td class="py-3 px-4 font-bold text-slate-800">${item.name}</td>
+              <td class="py-3 px-3 text-center font-semibold text-slate-700">${item.count}</td>
+              <td class="py-3 px-3 text-center">
+                <span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold ${item.count === 0 ? 'text-slate-400' : (parseFloat(winRate) >= 50 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700')}">
+                  ${item.count === 0 ? '-' : `${winRate}%`}
+                </span>
+              </td>
+              <td class="py-3 px-4 text-right font-bold ${item.count === 0 ? 'text-slate-400' : (isPos ? 'text-emerald-600' : 'text-rose-600')}">
+                ${item.count === 0 ? '₹0' : formatINR(item.netPnl, true)}
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } else if (cePeCard) {
+        cePeCard.classList.add('hidden');
+      }
+
+      if (hasSide && sideCard && sideTbody) {
+        sideCard.classList.remove('hidden');
+        sideTbody.innerHTML = ['BUY', 'SELL'].map(key => {
+          const item = sideMap[key];
+          const winRate = item.count > 0 ? ((item.wins / item.count) * 100).toFixed(1) : '0.0';
+          const isPos = item.netPnl >= 0;
+          return `
+            <tr class="hover:bg-slate-50/80 transition">
+              <td class="py-3 px-4 font-bold text-slate-800">${item.name}</td>
+              <td class="py-3 px-3 text-center font-semibold text-slate-700">${item.count}</td>
+              <td class="py-3 px-3 text-center">
+                <span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold ${item.count === 0 ? 'text-slate-400' : (parseFloat(winRate) >= 50 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700')}">
+                  ${item.count === 0 ? '-' : `${winRate}%`}
+                </span>
+              </td>
+              <td class="py-3 px-4 text-right font-bold ${item.count === 0 ? 'text-slate-400' : (isPos ? 'text-emerald-600' : 'text-rose-600')}">
+                ${item.count === 0 ? '₹0' : formatINR(item.netPnl, true)}
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } else if (sideCard) {
+        sideCard.classList.add('hidden');
+      }
+    }
+
     function refreshData() {
       if (supabaseClient) {
         fetchDataFromCloud();
@@ -2127,6 +3549,7 @@
 
     function handleTimeFilterChange() {
       recalculateAndRenderAll();
+      renderAnalytics();
     }
 
     window.addEventListener('DOMContentLoaded', () => {

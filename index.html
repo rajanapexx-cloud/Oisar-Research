@@ -376,6 +376,113 @@
         </div>
       </section>
 
+      <!-- DYNAMIC MILESTONE ROADMAP TO ₹1 LAKH (MISSION 100K) -->
+      <section id="roadmap1LakhSection" class="bg-white rounded-2xl p-6 shadow-card border border-slate-100 relative overflow-hidden transition-all">
+        <!-- Background decorative ambient blur -->
+        <div class="absolute -top-12 -right-12 w-48 h-48 bg-indigo-50 rounded-full blur-3xl pointer-events-none -z-0"></div>
+
+        <!-- Section Header -->
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-5 relative z-10">
+          <div class="flex items-center gap-3">
+            <span class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-indigo-100">
+              🎯
+            </span>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-base font-bold text-slate-900 tracking-tight" id="roadmapHeaderTitle">Roadmap to ₹1,00,000 Milestone</h3>
+                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-full">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Live Auto-Adjusted
+                </span>
+              </div>
+              <p class="text-xs text-slate-500">Compounding growth projection based on your historical trades & capital curve</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span id="roadmapTargetBadge" class="text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-50 text-slate-700 border border-slate-200">
+              Target: <b id="roadmapTargetText">₹1,00,000</b>
+            </span>
+            <button onclick="requireAdmin(openSettingsModal)" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition" title="Change Target Goal">
+              <i data-lucide="sliders" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Overall Master Progress Bar -->
+        <div class="bg-slate-50/80 border border-slate-100 rounded-xl p-4 mb-6 relative z-10">
+          <div class="flex items-center justify-between text-xs mb-2">
+            <div class="flex items-center gap-2 font-semibold text-slate-700">
+              <span>Overall Progress:</span>
+              <span id="roadmapOverallPct" class="text-indigo-600 font-bold text-sm">0%</span>
+            </div>
+            <div class="text-slate-500 font-medium">
+              <span id="roadmapCurrentValText" class="font-bold text-slate-800">₹0</span> / <span id="roadmapGoalValText" class="font-bold text-indigo-700">₹1,00,000</span>
+              <span id="roadmapRemainingText" class="ml-2 text-xs text-slate-400">(₹1,00,000 to go)</span>
+            </div>
+          </div>
+          <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden shadow-inner">
+            <div id="roadmapProgressBar" class="h-full bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-600 rounded-full transition-all duration-700 ease-out" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- 4 Milestone Stages Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-6 relative z-10" id="roadmapTiersGrid">
+          <!-- Dynamically populated by JS: Level 1, 2, 3, 4 -->
+        </div>
+
+        <!-- 4 Compounding Intelligence Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-4 border-t border-slate-100 relative z-10">
+          <!-- Metric 1: Projected Arrival Date -->
+          <div class="bg-slate-50 rounded-xl p-3 border border-slate-100 flex items-center gap-3">
+            <span class="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-base shrink-0">
+              📅
+            </span>
+            <div class="min-w-0">
+              <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Est. ₹1L Arrival</p>
+              <h4 id="roadmapEstimatedDate" class="text-sm font-bold text-slate-800 truncate">Calculating...</h4>
+              <p id="roadmapEstimatedSubtext" class="text-[10px] text-slate-400 truncate">Based on run-rate</p>
+            </div>
+          </div>
+
+          <!-- Metric 2: Monthly Pace -->
+          <div class="bg-slate-50 rounded-xl p-3 border border-slate-100 flex items-center gap-3">
+            <span class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-base shrink-0">
+              📈
+            </span>
+            <div class="min-w-0">
+              <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Monthly Run-Rate</p>
+              <h4 id="roadmapMonthlyPace" class="text-sm font-bold text-emerald-600 truncate">+0.0% / mo</h4>
+              <p id="roadmapMonthlySubtext" class="text-[10px] text-slate-400 truncate">Compounding growth</p>
+            </div>
+          </div>
+
+          <!-- Metric 3: Recommended Risk Per Trade (2% Rule) -->
+          <div class="bg-slate-50 rounded-xl p-3 border border-slate-100 flex items-center gap-3">
+            <span class="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-base shrink-0">
+              🛡️
+            </span>
+            <div class="min-w-0">
+              <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Safe Risk / Trade</p>
+              <h4 id="roadmapRecommendedRisk" class="text-sm font-bold text-slate-800 truncate">₹200</h4>
+              <p class="text-[10px] text-slate-400 truncate">2% Capital Rule limit</p>
+            </div>
+          </div>
+
+          <!-- Metric 4: Next 30-Day Target -->
+          <div class="bg-slate-50 rounded-xl p-3 border border-slate-100 flex items-center gap-3">
+            <span class="w-9 h-9 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-base shrink-0">
+              🎯
+            </span>
+            <div class="min-w-0">
+              <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Next 30D Target</p>
+              <h4 id="roadmapNextMonthTarget" class="text-sm font-bold text-purple-600 truncate">+₹1,000</h4>
+              <p id="roadmapNextMonthSubtext" class="text-[10px] text-slate-400 truncate">Stay on trajectory</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- MIDDLE ROW: Performance Overview (Single Stacked Candle: Net Profit + Brokerage/Tax) & CAGR -->
       <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
@@ -1472,6 +1579,12 @@
           <p class="text-[11px] text-slate-400 mt-1">If today's loss crosses this limit, a high-priority warning triggers to prevent revenge trading</p>
         </div>
 
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1 text-indigo-600">Target Milestone Goal (₹)</label>
+          <input type="number" id="settingTargetMilestone" step="any" placeholder="100000" class="w-full p-2.5 border border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none font-bold text-indigo-600 text-sm bg-indigo-50/30" />
+          <p class="text-[11px] text-slate-400 mt-1">Target portfolio value for the dynamic compounding projection & roadmap (default: ₹1,00,000)</p>
+        </div>
+
         <div class="flex items-center justify-between pt-3 border-t border-slate-100">
           <button type="button" onclick="clearAllData()" class="px-3 py-2 rounded-xl text-rose-600 hover:bg-rose-50 font-semibold transition text-xs">Reset All Data</button>
           <div class="flex items-center gap-2">
@@ -1816,7 +1929,8 @@
       userName: 'Rajan',
       nifty1Yr: 14.2,
       nifty3Yr: 15.8,
-      dailyLossLimit: 0
+      dailyLossLimit: 0,
+      targetMilestone: 100000
     };
 
     // Auto-Lock by default: Every time the web app opens/reloads, it starts in locked View-Only mode.
@@ -2463,6 +2577,8 @@
       if (settingN3) settingN3.value = state.settings.nifty3Yr !== undefined ? state.settings.nifty3Yr : 15.8;
       const settingLossLimit = document.getElementById('settingDailyLossLimit');
       if (settingLossLimit) settingLossLimit.value = state.settings.dailyLossLimit || '';
+      const settingMilestone = document.getElementById('settingTargetMilestone');
+      if (settingMilestone) settingMilestone.value = state.settings.targetMilestone || 100000;
       document.getElementById('settingsModal').classList.remove('hidden');
     }
 
@@ -2475,6 +2591,7 @@
       const n1Input = document.getElementById('settingNifty1Yr');
       const n3Input = document.getElementById('settingNifty3Yr');
       const lossLimitInput = document.getElementById('settingDailyLossLimit');
+      const milestoneInput = document.getElementById('settingTargetMilestone');
       state.settings = {
         ...state.settings,
         initialCapital: parseFloat(document.getElementById('settingTotalCapital').value) || 10000,
@@ -2486,7 +2603,8 @@
         card4Title: document.getElementById('settingCard4').value || 'Total Portfolio Value',
         nifty1Yr: n1Input && !isNaN(parseFloat(n1Input.value)) ? parseFloat(n1Input.value) : (state.settings.nifty1Yr || 14.2),
         nifty3Yr: n3Input && !isNaN(parseFloat(n3Input.value)) ? parseFloat(n3Input.value) : (state.settings.nifty3Yr || 15.8),
-        dailyLossLimit: lossLimitInput && !isNaN(parseFloat(lossLimitInput.value)) ? parseFloat(lossLimitInput.value) : 0
+        dailyLossLimit: lossLimitInput && !isNaN(parseFloat(lossLimitInput.value)) ? parseFloat(lossLimitInput.value) : 0,
+        targetMilestone: milestoneInput && !isNaN(parseFloat(milestoneInput.value)) ? parseFloat(milestoneInput.value) : (state.settings.targetMilestone || 100000)
       };
       localStorage.setItem('tj_live_settings_v5', JSON.stringify(state.settings));
       applySettings();
@@ -3143,6 +3261,7 @@
       drawCAGRGauge(Math.max(0, displayCAGR), niftyVal);
 
       renderActiveHoldingsWidget(holdingTrades);
+      updateMilestoneRoadmap(totalPortfolioValue, closedTrades, initialCapital);
       updatePerformanceStackedChart(closedTrades);
       updateTimeWiseChartGroupedByDate(trades, initialCapital, capitalLogs);
 
@@ -3214,6 +3333,201 @@
           ctx.strokeStyle = '#f59e0b';
           ctx.stroke();
         }
+      }
+    }
+
+    function updateMilestoneRoadmap(portfolioValue, closedTrades = [], initialCapital = 10000) {
+      const targetMilestone = (state.settings && state.settings.targetMilestone) ? state.settings.targetMilestone : 100000;
+      const targetEl = document.getElementById('roadmapTargetText');
+      if (targetEl) targetEl.innerText = formatINR(targetMilestone);
+      const goalValEl = document.getElementById('roadmapGoalValText');
+      if (goalValEl) goalValEl.innerText = formatINR(targetMilestone);
+      const currentValEl = document.getElementById('roadmapCurrentValText');
+      if (currentValEl) currentValEl.innerText = formatINR(portfolioValue);
+
+      // Overall Progress Percentage
+      const overallPct = Math.min(100, Math.max(0, (portfolioValue / targetMilestone) * 100));
+      const overallPctEl = document.getElementById('roadmapOverallPct');
+      if (overallPctEl) overallPctEl.innerText = `${overallPct.toFixed(1)}%`;
+      const progressBar = document.getElementById('roadmapProgressBar');
+      if (progressBar) progressBar.style.width = `${overallPct}%`;
+
+      const remainingAmt = Math.max(0, targetMilestone - portfolioValue);
+      const remainingEl = document.getElementById('roadmapRemainingText');
+      if (remainingEl) {
+        remainingEl.innerText = remainingAmt <= 0 ? '(Target Achieved! 🎉)' : `(${formatINR(remainingAmt)} to go)`;
+      }
+
+      // 4 Milestone Tiers
+      const t1 = Math.round(targetMilestone * 0.25);
+      const t2 = Math.round(targetMilestone * 0.50);
+      const t3 = Math.round(targetMilestone * 0.75);
+      const t4 = Math.round(targetMilestone);
+
+      const tiers = [
+        {
+          level: 'Level 1',
+          name: 'Foundation & Consistency',
+          icon: '🌱',
+          min: 0,
+          max: t1,
+          desc: `Scale to ${formatINR(t1)}`
+        },
+        {
+          level: 'Level 2',
+          name: 'Discipline & Sizing',
+          icon: '⚡',
+          min: t1,
+          max: t2,
+          desc: `${formatINR(t1)} ➔ ${formatINR(t2)}`
+        },
+        {
+          level: 'Level 3',
+          name: 'Compounding Wave',
+          icon: '🚀',
+          min: t2,
+          max: t3,
+          desc: `${formatINR(t2)} ➔ ${formatINR(t3)}`
+        },
+        {
+          level: 'Level 4',
+          name: 'The 1 Lakh Club',
+          icon: '🏆',
+          min: t3,
+          max: t4,
+          desc: `${formatINR(t3)} ➔ ${formatINR(t4)}`
+        }
+      ];
+
+      const tiersContainer = document.getElementById('roadmapTiersGrid');
+      if (tiersContainer) {
+        tiersContainer.innerHTML = tiers.map(tier => {
+          let statusBadge = '';
+          let tierProgress = 0;
+          let borderStyle = 'border-slate-200 bg-white';
+
+          if (portfolioValue >= tier.max) {
+            tierProgress = 100;
+            statusBadge = '<span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">Completed ✅</span>';
+            borderStyle = 'border-emerald-200 bg-emerald-50/20';
+          } else if (portfolioValue >= tier.min) {
+            tierProgress = Math.min(100, Math.max(0, ((portfolioValue - tier.min) / (tier.max - tier.min)) * 100));
+            statusBadge = '<span class="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full animate-pulse">In Progress ⚡</span>';
+            borderStyle = 'border-indigo-300 ring-2 ring-indigo-50 bg-indigo-50/10';
+          } else {
+            tierProgress = 0;
+            statusBadge = '<span class="text-[10px] font-semibold text-slate-400 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">Locked 🔒</span>';
+            borderStyle = 'border-slate-200 bg-slate-50/60 opacity-80';
+          }
+
+          return `
+            <div class="rounded-xl p-3.5 border transition-all ${borderStyle} flex flex-col justify-between min-h-[125px]">
+              <div>
+                <div class="flex items-center justify-between mb-1.5">
+                  <span class="text-xs font-bold text-slate-500">${tier.icon} ${tier.level}</span>
+                  ${statusBadge}
+                </div>
+                <h5 class="text-sm font-bold text-slate-900 leading-tight">${tier.name}</h5>
+                <p class="text-[11px] text-slate-500 mt-0.5">${tier.desc}</p>
+              </div>
+              <div class="mt-3">
+                <div class="flex items-center justify-between text-[11px] font-medium text-slate-500 mb-1">
+                  <span>Progress</span>
+                  <span class="font-bold ${tierProgress === 100 ? 'text-emerald-600' : 'text-indigo-600'}">${tierProgress.toFixed(0)}%</span>
+                </div>
+                <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                  <div class="h-full ${tierProgress === 100 ? 'bg-emerald-500' : 'bg-indigo-600'} rounded-full transition-all duration-500" style="width: ${tierProgress}%"></div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Dynamic Pace & Projection Calculation
+      let monthlyPacePct = 0;
+      let effectiveMonthlyRate = 0.05; // 5% default reasonable benchmark
+      let hasHistory = false;
+
+      if (closedTrades.length > 0) {
+        const sortedTrades = [...closedTrades].sort((a, b) => new Date(a.date) - new Date(b.date));
+        const firstDate = new Date(sortedTrades[0].date);
+        const lastDate = new Date(sortedTrades[sortedTrades.length - 1].exitDate || sortedTrades[sortedTrades.length - 1].date || new Date());
+        const totalDays = Math.max(1, (lastDate - firstDate) / (1000 * 60 * 60 * 24));
+        const totalNetPnl = closedTrades.reduce((sum, t) => sum + (t.pnl || 0), 0);
+
+        if (totalDays >= 5 && initialCapital > 0) {
+          const totalReturnRatio = totalNetPnl / initialCapital;
+          const monthsElapsed = Math.max(0.2, totalDays / 30.4);
+          monthlyPacePct = (totalReturnRatio / monthsElapsed) * 100;
+          hasHistory = true;
+        }
+      }
+
+      // Clamping and displaying pace
+      const paceEl = document.getElementById('roadmapMonthlyPace');
+      const paceSubEl = document.getElementById('roadmapMonthlySubtext');
+      if (paceEl) {
+        if (hasHistory && monthlyPacePct !== 0) {
+          paceEl.innerText = `${monthlyPacePct >= 0 ? '+' : ''}${monthlyPacePct.toFixed(1)}% / mo`;
+          paceEl.className = `text-sm font-bold truncate ${monthlyPacePct >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
+          if (paceSubEl) paceSubEl.innerText = `${closedTrades.length} trades recorded`;
+          if (monthlyPacePct > 0) {
+            effectiveMonthlyRate = Math.min(0.25, Math.max(0.03, monthlyPacePct / 100));
+          } else {
+            effectiveMonthlyRate = 0.045; // 4.5% baseline needed
+          }
+        } else {
+          paceEl.innerText = '+5.0% / mo';
+          paceEl.className = 'text-sm font-bold truncate text-indigo-600';
+          if (paceSubEl) paceSubEl.innerText = 'Baseline growth pace';
+          effectiveMonthlyRate = 0.05;
+        }
+      }
+
+      // 2. Compounding Formula: N = ln(Target / Current) / ln(1 + r)
+      const estDateEl = document.getElementById('roadmapEstimatedDate');
+      const estSubEl = document.getElementById('roadmapEstimatedSubtext');
+      if (estDateEl) {
+        if (portfolioValue >= targetMilestone) {
+          estDateEl.innerText = 'Achieved! 🏆';
+          estDateEl.className = 'text-sm font-bold text-emerald-600 truncate';
+          if (estSubEl) estSubEl.innerText = 'Milestone Reached';
+        } else {
+          const P = Math.max(1000, portfolioValue);
+          const T = targetMilestone;
+          const r = effectiveMonthlyRate;
+          const monthsNeeded = Math.ceil(Math.log(T / P) / Math.log(1 + r));
+
+          const arrivalDate = new Date();
+          arrivalDate.setMonth(arrivalDate.getMonth() + monthsNeeded);
+          const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          const arrivalStr = `${monthNames[arrivalDate.getMonth()]} ${arrivalDate.getFullYear()}`;
+
+          estDateEl.innerText = `${arrivalStr} (~${monthsNeeded}m)`;
+          estDateEl.className = 'text-sm font-bold text-slate-800 truncate';
+          if (estSubEl) estSubEl.innerText = `At ${(effectiveMonthlyRate * 100).toFixed(1)}% compounding pace`;
+        }
+      }
+
+      // 3. Safe Risk Allocation (2% Rule)
+      const riskEl = document.getElementById('roadmapRecommendedRisk');
+      if (riskEl) {
+        const safeRisk = Math.round(portfolioValue * 0.02);
+        riskEl.innerText = formatINR(Math.max(100, safeRisk));
+      }
+
+      // 4. Next 30-Day Target
+      const nextTargetEl = document.getElementById('roadmapNextMonthTarget');
+      const nextSubEl = document.getElementById('roadmapNextMonthSubtext');
+      if (nextTargetEl) {
+        const nextMonthTargetProfit = Math.round(portfolioValue * effectiveMonthlyRate);
+        nextTargetEl.innerText = `+${formatINR(nextMonthTargetProfit)}`;
+        if (nextSubEl) nextSubEl.innerText = `Target portfolio: ${formatINR(portfolioValue + nextMonthTargetProfit)}`;
+      }
+
+      if (typeof lucide !== 'undefined' && lucide.createIcons) {
+        lucide.createIcons();
       }
     }
 

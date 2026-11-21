@@ -997,6 +997,67 @@
           </div>
         </div>
 
+        <!-- BREAKDOWN SECTION: TIME-OF-DAY / SESSION PERFORMANCE (GOLDEN HOUR vs CHOP ZONE) -->
+        <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-card border border-slate-100 flex flex-col gap-5">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <i data-lucide="sun" class="w-4 h-4 text-amber-500"></i>
+                  Time-of-Day Session Breakdown (Golden Hour vs Chop Zone)
+                </h3>
+                <span class="text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200/60 px-2 py-0.5 rounded-full">
+                  Market Timing Edge
+                </span>
+              </div>
+              <p class="text-xs text-slate-400">Execution time analysis: Morning Open vs Mid-Day Chop vs Afternoon/Expiry moves</p>
+            </div>
+            <div id="goldenHourBadge" class="hidden px-3 py-1 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5">
+              <span>⭐ Best Session:</span> <b id="goldenHourBestSessionText">Morning Open</b>
+            </div>
+          </div>
+
+          <!-- Dynamic Intelligent Insight Banner -->
+          <div id="timeOfDayInsightBanner" class="p-3.5 rounded-xl border flex items-start gap-3 text-xs leading-relaxed transition-all">
+            <!-- Dynamically populated insight: e.g. "Morning session has 100% win rate! Avoid trading during 10:30 - 1:15 chop zone." -->
+          </div>
+
+          <!-- 3 Session Summary Cards Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5" id="timeOfDayCardsGrid">
+            <!-- Dynamically populated: Morning, Mid-Day, Afternoon cards -->
+          </div>
+
+          <!-- Details Table & Bar Chart Grid -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            <!-- Table (2 cols) -->
+            <div class="lg:col-span-2 overflow-x-auto rounded-xl border border-slate-100">
+              <table class="w-full text-left text-xs text-slate-600">
+                <thead class="bg-slate-50 text-slate-500 uppercase font-semibold border-b border-slate-100">
+                  <tr>
+                    <th class="py-3 px-4">Market Session</th>
+                    <th class="py-3 px-3 text-center">Time Window</th>
+                    <th class="py-3 px-3 text-center">Trades</th>
+                    <th class="py-3 px-3 text-center">Win Rate</th>
+                    <th class="py-3 px-4 text-right">Net P&L (₹)</th>
+                    <th class="py-3 px-4 text-right">Avg P&L / Trade</th>
+                  </tr>
+                </thead>
+                <tbody id="timeOfDayTableBody" class="divide-y divide-slate-100">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Chart (1 col) -->
+            <div class="bg-slate-50/60 rounded-xl p-4 border border-slate-100 flex flex-col items-center justify-center min-h-[260px]">
+              <span class="text-xs font-bold text-slate-700 self-start mb-2">Net P&L by Session (₹)</span>
+              <div class="relative w-full h-56 flex items-center justify-center">
+                <canvas id="timeOfDayBarChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- BREAKDOWN SECTION 3: CONDITIONAL CE / PE & BUY / SELL-WRITE BREAKDOWN -->
         <div id="optionsBreakdownContainer" class="hidden flex flex-col gap-6">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1365,14 +1426,21 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label class="block font-semibold text-slate-700 mb-1">Buy / Entry Date</label>
             <input type="date" id="tradeDate" required class="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none" />
           </div>
           <div>
+            <label class="block font-semibold text-slate-700 mb-1 flex items-center justify-between">
+              <span>Entry Time</span>
+              <span id="tradeSessionBadge" class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">🌅 Morning</span>
+            </label>
+            <input type="time" id="tradeTime" onchange="updateTradeSessionBadge()" class="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none font-semibold text-slate-800" />
+          </div>
+          <div>
             <label class="block font-semibold text-slate-700 mb-1">Symbol / Stock Name</label>
-            <input type="text" id="tradeSymbol" placeholder="e.g. RELIANCE, TATA MOTORS, NIFTY" required class="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none uppercase font-bold" />
+            <input type="text" id="tradeSymbol" placeholder="e.g. RELIANCE, NIFTY, SENSEX" required class="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none uppercase font-bold" />
           </div>
         </div>
 
@@ -2011,6 +2079,7 @@
     let timeWiseChartInstance = null;
     let setupChartInstance = null;
     let weekdayChartInstance = null;
+    let timeOfDayChartInstance = null;
     let pendingAdminAction = null;
 
     // ================= ADMIN & READ-ONLY PERMISSION GUARDS =================
@@ -2221,6 +2290,7 @@
             let stopLoss = null;
             let chartUrl = '';
             let exitDate = t.date;
+            let tradeTime = null;
 
             const metaMatch = userNotes.match(/<!--TJ:([\s\S]*?)-->/);
             if (metaMatch) {
@@ -2230,6 +2300,7 @@
                 if (meta.sl) stopLoss = meta.sl;
                 if (meta.c) chartUrl = meta.c;
                 if (meta.ed) exitDate = meta.ed;
+                if (meta.tm) tradeTime = meta.tm;
               } catch(e) {}
               userNotes = userNotes.replace(/<!--TJ:[\s\S]*?-->/g, '').trim();
             }
@@ -2237,6 +2308,7 @@
             return {
               id: t.id,
               date: t.date,
+              time: tradeTime || (typeof getTradeTime === 'function' ? getTradeTime(t) : null),
               symbol: t.symbol,
               type: t.type,
               entry: Number(t.entry),
@@ -2333,6 +2405,7 @@
           if (tradeObj.stopLoss) meta.sl = tradeObj.stopLoss;
           if (tradeObj.chartUrl) meta.c = tradeObj.chartUrl;
           if (tradeObj.exitDate) meta.ed = tradeObj.exitDate;
+          if (tradeObj.time) meta.tm = tradeObj.time;
           
           notesWithMeta = notesWithMeta.replace(/<!--TJ:[\s\S]*?-->/g, '').trim();
           if (Object.keys(meta).length > 0) {
@@ -2429,6 +2502,83 @@
         return isNeg ? '-' + formatted : '+' + formatted;
       }
       return isNeg ? '-' + formatted : formatted;
+    }
+
+    // ================= TIME-OF-DAY & SESSION HELPERS =================
+    function formatTime12(timeStr) {
+      if (!timeStr) return '';
+      const parts = timeStr.split(':');
+      if (parts.length < 2) return timeStr;
+      let h = parseInt(parts[0], 10);
+      const m = parts[1].padStart(2, '0');
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12;
+      h = h ? h : 12;
+      return `${h}:${m} ${ampm}`;
+    }
+
+    function getTradeTime(t) {
+      if (!t) return null;
+      if (t.time) return t.time;
+      if (t.notes) {
+        const metaMatch = t.notes.match(/<!--TJ:([\s\S]*?)-->/);
+        if (metaMatch) {
+          try {
+            const meta = JSON.parse(metaMatch[1]);
+            if (meta.tm) return meta.tm;
+          } catch(e) {}
+        }
+      }
+      const ts = parseInt(t.id, 10);
+      if (!isNaN(ts) && ts > 1600000000000) {
+        const d = new Date(ts);
+        const istHours = String(d.getUTCHours() + 5 + Math.floor((d.getUTCMinutes() + 30) / 60)).padStart(2, '0');
+        const istMinutes = String((d.getUTCMinutes() + 30) % 60).padStart(2, '0');
+        return `${istHours}:${istMinutes}`;
+      }
+      return null;
+    }
+
+    function getTradeSession(timeStr) {
+      if (!timeStr) return { id: 'offmarket', name: 'Off-Market / BTST', shortName: 'BTST / Off-Hrs', icon: '🌙', timeRange: 'Post 3:30 PM / BTST', color: 'slate', desc: 'Overnight swing & BTST trades' };
+      const parts = timeStr.split(':');
+      if (parts.length < 2) return { id: 'offmarket', name: 'Off-Market / BTST', shortName: 'BTST / Off-Hrs', icon: '🌙', timeRange: 'Post 3:30 PM / BTST', color: 'slate', desc: 'Overnight swing & BTST trades' };
+      const h = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      const timeVal = h + m / 60;
+
+      if (timeVal >= 9.25 && timeVal <= 10.5) {
+        return { id: 'morning', name: 'Morning Open', shortName: 'Morning', icon: '🌅', timeRange: '9:15 AM - 10:30 AM', color: 'emerald', desc: 'Opening bell breakout & momentum' };
+      } else if (timeVal > 10.5 && timeVal <= 13.25) {
+        return { id: 'midday', name: 'Mid-Day Chop', shortName: 'Mid-Day', icon: '☀️', timeRange: '10:30 AM - 1:15 PM', color: 'amber', desc: 'Sideways consolidation & decay trap' };
+      } else if (timeVal > 13.25 && timeVal <= 15.5) {
+        return { id: 'afternoon', name: 'Afternoon / Expiry', shortName: 'Afternoon', icon: '🚀', timeRange: '1:15 PM - 3:30 PM', color: 'purple', desc: 'European open & 0DTE gamma moves' };
+      } else {
+        return { id: 'offmarket', name: 'Off-Market / BTST', shortName: 'BTST / Off-Hrs', icon: '🌙', timeRange: 'Post 3:30 PM / BTST', color: 'slate', desc: 'Overnight swing & BTST trades' };
+      }
+    }
+
+    function updateTradeSessionBadge() {
+      const timeInput = document.getElementById('tradeTime');
+      const badge = document.getElementById('tradeSessionBadge');
+      if (!badge) return;
+      const tVal = timeInput ? timeInput.value : '';
+      if (!tVal) {
+        badge.innerText = '⏱️ Auto Session';
+        badge.className = 'text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200';
+        return;
+      }
+      const sess = getTradeSession(tVal);
+      badge.innerText = `${sess.icon} ${sess.shortName}`;
+      if (sess.id === 'morning') {
+        badge.className = 'text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200';
+      } else if (sess.id === 'midday') {
+        badge.className = 'text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200';
+      } else if (sess.id === 'afternoon') {
+        badge.className = 'text-[10px] font-bold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200';
+      } else {
+        badge.className = 'text-[10px] font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200';
+      }
     }
 
     function openBackupModal() {
@@ -2648,6 +2798,12 @@
       document.getElementById('tradeForm').reset();
       document.getElementById('editTradeId').value = '';
       document.getElementById('tradeDate').value = new Date().toISOString().split('T')[0];
+      const timeInput = document.getElementById('tradeTime');
+      if (timeInput) {
+        const now = new Date();
+        timeInput.value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      }
+      updateTradeSessionBadge();
       document.getElementById('modalTradeTitle').innerText = "Add New Trade / Holding";
       if (document.getElementById('tradeStopLoss')) document.getElementById('tradeStopLoss').value = '';
       if (document.getElementById('tradeMistake')) document.getElementById('tradeMistake').value = 'NONE';
@@ -2669,6 +2825,7 @@
       e.preventDefault();
       const editId = document.getElementById('editTradeId').value;
       const date = document.getElementById('tradeDate').value;
+      const time = document.getElementById('tradeTime')?.value || '';
       const symbol = document.getElementById('tradeSymbol').value.toUpperCase().trim();
       const type = document.getElementById('tradeType').value;
       const entry = parseFloat(document.getElementById('tradeEntry').value) || 0;
@@ -2699,6 +2856,7 @@
       const tradeObj = {
         id: editId || Date.now().toString(),
         date,
+        time,
         symbol,
         type,
         entry,
@@ -2853,6 +3011,11 @@
       if (!trade) return;
       document.getElementById('editTradeId').value = trade.id;
       document.getElementById('tradeDate').value = trade.date;
+      const timeInput = document.getElementById('tradeTime');
+      if (timeInput) {
+        timeInput.value = trade.time || getTradeTime(trade) || '';
+      }
+      updateTradeSessionBadge();
       document.getElementById('tradeSymbol').value = trade.symbol;
       document.getElementById('tradeType').value = trade.type;
       document.getElementById('tradeEntry').value = trade.entry;
@@ -2966,9 +3129,15 @@
           }
         }
 
+        const tradeTime = getTradeTime(t);
+        const sess = tradeTime ? getTradeSession(tradeTime) : null;
+
         return `
           <tr class="hover:bg-slate-50/70 transition ${isHolding ? 'bg-purple-50/20' : ''}">
-            <td class="py-3 px-4 font-medium text-slate-700">${t.date}</td>
+            <td class="py-3 px-4 font-medium text-slate-700 whitespace-nowrap">
+              <div>${t.date}</div>
+              ${tradeTime ? `<div class="text-[10px] text-slate-400 font-normal flex items-center gap-1 mt-0.5" title="${sess ? sess.name : ''}">${sess ? sess.icon : '⏱️'} ${formatTime12(tradeTime)}</div>` : ''}
+            </td>
             <td class="py-3 px-4 font-bold text-slate-900 flex items-center gap-1.5 flex-wrap">
               <span>${t.symbol}</span>
               ${chartIconHtml}
@@ -4069,6 +4238,7 @@
       // Render Breakdowns
       renderSetupBreakdown(closedTrades);
       renderWeekdayBreakdown(closedTrades);
+      renderTimeOfDayAnalytics(closedTrades);
       renderConditionalOptionBreakdowns(closedTrades);
       renderPsychologyAnalytics(closedTrades);
       renderHoldingDurationAnalytics(closedTrades);
@@ -4574,6 +4744,227 @@
               backgroundColor: daysList.map(d => d.netPnl >= 0 ? '#10b981' : '#f43f5e'),
               borderRadius: 6,
               barThickness: 22
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              datalabels: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (context) => ` Net P&L: ${formatINR(context.raw, true)}`
+                }
+              }
+            },
+            scales: {
+              x: { grid: { display: false }, ticks: { font: { size: 11, weight: '600' }, color: '#64748b' } },
+              y: {
+                grid: { color: '#f1f5f9' },
+                ticks: {
+                  callback: (v) => formatINR(v),
+                  color: '#94a3b8',
+                  font: { size: 10 }
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    function renderTimeOfDayAnalytics(closedTrades = []) {
+      const sessionDefs = [
+        { id: 'morning', name: 'Morning Open', shortName: 'Morning', timeRange: '9:15 AM - 10:30 AM', desc: 'Opening bell breakout & momentum', icon: '🌅', color: 'emerald' },
+        { id: 'midday', name: 'Mid-Day Chop', shortName: 'Mid-Day', timeRange: '10:30 AM - 1:15 PM', desc: 'Sideways consolidation & decay trap', icon: '☀️', color: 'amber' },
+        { id: 'afternoon', name: 'Afternoon / Expiry', shortName: 'Afternoon', timeRange: '1:15 PM - 3:30 PM', desc: 'European open & 0DTE gamma moves', icon: '🚀', color: 'purple' },
+        { id: 'offmarket', name: 'Off-Market / BTST', shortName: 'BTST / Off-Hrs', timeRange: 'Post 3:30 PM / BTST', desc: 'Overnight swing & BTST trades', icon: '🌙', color: 'slate' }
+      ];
+
+      const stats = {};
+      sessionDefs.forEach(s => {
+        stats[s.id] = { ...s, count: 0, wins: 0, losses: 0, netPnl: 0, winAmt: 0, lossAmt: 0 };
+      });
+
+      closedTrades.forEach(t => {
+        const timeStr = getTradeTime(t);
+        const sess = getTradeSession(timeStr);
+        let sId = stats[sess.id] ? sess.id : 'offmarket';
+        if (sId === 'offmarket' && t.strategy && t.strategy.toUpperCase().includes('BTST')) {
+          sId = 'offmarket';
+        }
+        const pnl = parseFloat(t.pnl) || 0;
+        stats[sId].count += 1;
+        stats[sId].netPnl += pnl;
+        if (pnl > 0) {
+          stats[sId].wins += 1;
+          stats[sId].winAmt += pnl;
+        } else if (pnl < 0) {
+          stats[sId].losses += 1;
+          stats[sId].lossAmt += Math.abs(pnl);
+        }
+      });
+
+      const displaySessions = sessionDefs.filter(s => s.id !== 'offmarket' || stats.offmarket.count > 0);
+
+      // 1. Intelligent Insight Analysis
+      const activeStats = Object.values(stats).filter(s => s.count > 0);
+      let bestSession = null;
+      let worstSession = null;
+
+      activeStats.forEach(s => {
+        if (!bestSession || s.netPnl > bestSession.netPnl) bestSession = s;
+        if (!worstSession || s.netPnl < worstSession.netPnl) worstSession = s;
+      });
+
+      const insightBanner = document.getElementById('timeOfDayInsightBanner');
+      const goldenBadge = document.getElementById('goldenHourBadge');
+      const goldenBestSessionText = document.getElementById('goldenHourBestSessionText');
+
+      if (insightBanner) {
+        if (activeStats.length === 0) {
+          insightBanner.className = 'p-3.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 text-xs flex items-center gap-2.5';
+          insightBanner.innerHTML = `<i data-lucide="info" class="w-4 h-4 text-slate-400 shrink-0"></i><span>Selected filter mein trades nahi hain. Time-of-day stats ke liye trades log karein.</span>`;
+          if (goldenBadge) goldenBadge.classList.add('hidden');
+        } else {
+          if (goldenBadge && bestSession && bestSession.netPnl > 0) {
+            goldenBadge.classList.remove('hidden');
+            if (goldenBestSessionText) goldenBestSessionText.innerText = `${bestSession.icon} ${bestSession.name}`;
+          } else if (goldenBadge) {
+            goldenBadge.classList.add('hidden');
+          }
+
+          let insightHtml = '';
+          if (bestSession && bestSession.id === 'morning' && bestSession.netPnl > 0) {
+            const winRate = ((bestSession.wins / bestSession.count) * 100).toFixed(0);
+            insightHtml = `
+              <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 font-bold">⭐</div>
+              <div>
+                <p class="font-bold text-slate-900 text-xs">Golden Hour Edge: Morning Session is your highest edge!</p>
+                <p class="text-slate-600 mt-0.5">
+                  Subah <b>9:15 - 10:30 AM</b> mein aapka win rate <b>${winRate}%</b> hai with <b>+${formatINR(bestSession.netPnl)} net profit</b>.
+                  ${worstSession && worstSession.id === 'midday' && worstSession.netPnl < 0 ? `Lekin <b>Mid-Day (${worstSession.timeRange})</b> chop zone mein <b>${formatINR(worstSession.netPnl)}</b> ka net loss hua hai. Dopahar ko over-trading avoid karke apna morning profit protect karein!` : 'Opening momentum par focused setups lene se drawdowns minimum rehte hain.'}
+                </p>
+              </div>
+            `;
+            insightBanner.className = 'p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/60 text-emerald-950 text-xs flex items-start gap-3';
+          } else if (worstSession && worstSession.netPnl < 0) {
+            insightHtml = `
+              <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 font-bold">⚠️</div>
+              <div>
+                <p class="font-bold text-slate-900 text-xs">Timing Alert: ${worstSession.name} is causing drawdowns</p>
+                <p class="text-slate-600 mt-0.5">
+                  <b>${worstSession.name} (${worstSession.timeRange})</b> session mein <b>${formatINR(worstSession.netPnl)}</b> net loss hua hai.
+                  ${bestSession && bestSession.netPnl > 0 ? `Aapka best performance <b>${bestSession.name}</b> (+${formatINR(bestSession.netPnl)}) mein hai.` : ''}
+                  Chop zones mein trade quantities aadhi karein ya terminal lock rakhein.
+                </p>
+              </div>
+            `;
+            insightBanner.className = 'p-3.5 rounded-xl border border-amber-200 bg-amber-50/60 text-amber-950 text-xs flex items-start gap-3';
+          } else {
+            insightHtml = `
+              <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 font-bold">📊</div>
+              <div>
+                <p class="font-bold text-slate-900 text-xs">Balanced Session Distribution</p>
+                <p class="text-slate-600 mt-0.5">Har market session mein disciplined execution maintain karein aur pre-planned levels par hi entry lein.</p>
+              </div>
+            `;
+            insightBanner.className = 'p-3.5 rounded-xl border border-blue-200 bg-blue-50/60 text-blue-950 text-xs flex items-start gap-3';
+          }
+          insightBanner.innerHTML = insightHtml;
+        }
+      }
+
+      // 2. Render 3 Session Summary Cards Grid
+      const cardsGrid = document.getElementById('timeOfDayCardsGrid');
+      if (cardsGrid) {
+        cardsGrid.innerHTML = ['morning', 'midday', 'afternoon'].map(sId => {
+          const s = stats[sId];
+          const winRate = s.count > 0 ? ((s.wins / s.count) * 100).toFixed(1) : '0.0';
+          const isPos = s.netPnl >= 0;
+          const borderCls = isPos ? 'border-emerald-200 bg-emerald-50/20' : (s.count > 0 ? 'border-rose-200 bg-rose-50/20' : 'border-slate-200 bg-white');
+
+          return `
+            <div class="rounded-xl p-4 border transition-all ${borderCls} flex flex-col justify-between min-h-[140px]">
+              <div>
+                <div class="flex items-center justify-between mb-1.5">
+                  <span class="text-xs font-bold text-slate-600 flex items-center gap-1.5">
+                    <span>${s.icon}</span> ${s.name}
+                  </span>
+                  <span class="text-[10px] font-semibold text-slate-400 bg-white/80 px-2 py-0.5 rounded-md border border-slate-200">${s.timeRange}</span>
+                </div>
+                <div class="text-2xl font-black ${s.count === 0 ? 'text-slate-400' : (isPos ? 'text-emerald-600' : 'text-rose-600')} tracking-tight mt-1">
+                  ${s.count === 0 ? '₹0' : formatINR(s.netPnl, true)}
+                </div>
+                <div class="text-[11px] text-slate-400 mt-0.5">${s.desc}</div>
+              </div>
+
+              <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                <span class="text-slate-500">
+                  <b class="text-slate-700">${s.count}</b> Trades (<b class="text-emerald-600">${s.wins}W</b> / <b class="text-rose-600">${s.losses}L</b>)
+                </span>
+                <span class="font-bold ${parseFloat(winRate) >= 60 ? 'text-emerald-600' : (s.count === 0 ? 'text-slate-400' : 'text-amber-600')}">
+                  ${s.count === 0 ? '-' : `${winRate}% Win`}
+                </span>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // 3. Render Table Body
+      const tbody = document.getElementById('timeOfDayTableBody');
+      if (tbody) {
+        tbody.innerHTML = displaySessions.map(sIdObj => {
+          const s = stats[sIdObj.id];
+          const winRate = s.count > 0 ? ((s.wins / s.count) * 100).toFixed(1) : '0.0';
+          const avgPnl = s.count > 0 ? (s.netPnl / s.count) : 0;
+          const isPos = s.netPnl >= 0;
+
+          return `
+            <tr class="hover:bg-slate-50/80 transition">
+              <td class="py-3 px-4 font-bold text-slate-800 flex items-center gap-2">
+                <span class="text-base">${s.icon}</span>
+                <div>
+                  <div class="leading-tight">${s.name}</div>
+                  <div class="text-[10px] font-normal text-slate-400">${s.desc}</div>
+                </div>
+              </td>
+              <td class="py-3 px-3 text-center font-medium text-slate-500 text-xs">${s.timeRange}</td>
+              <td class="py-3 px-3 text-center font-semibold text-slate-700">${s.count}</td>
+              <td class="py-3 px-3 text-center">
+                <span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold ${s.count === 0 ? 'text-slate-400' : (parseFloat(winRate) >= 50 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700')}">
+                  ${s.count === 0 ? '-' : `${winRate}%`}
+                </span>
+              </td>
+              <td class="py-3 px-4 text-right font-bold ${s.count === 0 ? 'text-slate-400' : (isPos ? 'text-emerald-600' : 'text-rose-600')}">
+                ${s.count === 0 ? '₹0' : formatINR(s.netPnl, true)}
+              </td>
+              <td class="py-3 px-4 text-right font-semibold ${s.count === 0 ? 'text-slate-400' : (avgPnl >= 0 ? 'text-slate-700' : 'text-rose-600')}">
+                ${s.count === 0 ? '₹0' : formatINR(avgPnl, true)}
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // 4. Render Chart.js Bar Chart
+      const canvas = document.getElementById('timeOfDayBarChart');
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        if (timeOfDayChartInstance) timeOfDayChartInstance.destroy();
+        const chartData = displaySessions.map(s => stats[s.id]);
+        timeOfDayChartInstance = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: chartData.map(d => d.shortName || d.name),
+            datasets: [{
+              label: 'Net P&L',
+              data: chartData.map(d => d.netPnl),
+              backgroundColor: chartData.map(d => d.netPnl >= 0 ? '#10b981' : '#f43f5e'),
+              borderRadius: 6,
+              barThickness: 24
             }]
           },
           options: {

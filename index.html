@@ -23,6 +23,7 @@
 
   <script>
     tailwind.config = {
+      darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
@@ -61,6 +62,106 @@
       background-color: rgba(15, 23, 42, 0.45);
       backdrop-filter: blur(4px);
     }
+    .grid-cols-25 {
+      display: grid;
+      grid-template-columns: repeat(25, minmax(0, 1fr));
+    }
+    @media (min-width: 1024px) {
+      .lg\:grid-cols-40 {
+        grid-template-columns: repeat(40, minmax(0, 1fr));
+      }
+      .lg\:grid-rows-25 {
+        grid-template-rows: repeat(25, minmax(0, 1fr));
+      }
+    }
+    .banknote-bill-text {
+      text-shadow: 0 2px 16px rgba(6, 78, 59, 0.25), 0 1px 3px rgba(0, 0, 0, 0.25);
+    }
+    .rupee-security-thread {
+      width: 4px;
+      background-image: repeating-linear-gradient(
+        180deg,
+        #059669 0px,
+        #059669 6px,
+        #fcd34d 6px,
+        #fcd34d 9px,
+        #10b981 9px,
+        #10b981 14px,
+        rgba(255, 255, 255, 0.9) 14px,
+        rgba(255, 255, 255, 0.9) 16px
+      );
+      box-shadow: 0 0 8px rgba(245, 158, 11, 0.55);
+      opacity: 0.92;
+    }
+    .banknote-tile-cell {
+      aspect-ratio: 1 / 1;
+    }
+    @media (min-width: 1024px) {
+      .banknote-tile-cell {
+        aspect-ratio: 1.55 / 1;
+      }
+    }
+    .tile-hatched {
+      background-color: #f8fafc;
+      background-image: repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(148, 163, 184, 0.22) 2px, rgba(148, 163, 184, 0.22) 3.5px);
+    }
+    body.dark .tile-hatched {
+      background-color: #1e293b !important;
+      background-image: repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(100, 116, 139, 0.35) 2px, rgba(100, 116, 139, 0.35) 3.5px) !important;
+    }
+    .tile-projected-shade {
+      background-color: #eef2f6;
+      background-image: radial-gradient(rgba(100, 116, 139, 0.22) 0.75px, transparent 0.75px);
+      background-size: 4px 4px;
+    }
+    body.dark .tile-projected-shade {
+      background-color: #243044 !important;
+      background-image: radial-gradient(rgba(148, 163, 184, 0.22) 0.75px, transparent 0.75px) !important;
+      background-size: 4px 4px !important;
+    }
+    .tile-hatched-legend {
+      background-color: #f8fafc;
+      background-image: repeating-linear-gradient(45deg, transparent, transparent 2px, #94a3b8 2px, #94a3b8 3.5px);
+    }
+    body.dark .tile-hatched-legend {
+      background-color: #1e293b !important;
+      background-image: repeating-linear-gradient(45deg, transparent, transparent 2px, #64748b 2px, #64748b 3.5px) !important;
+    }
+    @keyframes tilePulse {
+      0%, 100% { box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.8), 0 0 6px rgba(249, 115, 22, 0.7); transform: scale(1.05); }
+      50% { box-shadow: 0 0 0 2px rgba(249, 115, 22, 1), 0 0 10px rgba(249, 115, 22, 0.95); transform: scale(1.18); }
+    }
+    .tile-frontier {
+      animation: tilePulse 1.8s infinite ease-in-out;
+      z-index: 2;
+      position: relative;
+    }
+    input[type="range"].plan-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      outline: none;
+    }
+    body.dark input[type="range"].plan-slider {
+      background: #334155;
+    }
+    input[type="range"].plan-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: currentColor;
+      border: 2px solid #ffffff;
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.25);
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+    input[type="range"].plan-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
     /* DARK MODE STYLES */
     body.dark {
       background-color: #0b0f19;
@@ -69,6 +170,22 @@
     body.dark .bg-white {
       background-color: #111827 !important;
       color: #f1f5f9;
+    }
+    body.dark .bg-\[\#eef6f1\] {
+      background-color: #0e1a16 !important;
+      border-color: #1e3a2f !important;
+      color: #f1f5f9;
+    }
+    body.dark .bg-white\/80, body.dark .bg-white\/85 {
+      background-color: #1e293b !important;
+      border-color: #334155 !important;
+      color: #f1f5f9;
+    }
+    body.dark .text-emerald-900\/70, body.dark .text-emerald-800\/70, body.dark .text-emerald-900, body.dark .text-emerald-800 {
+      color: #6ee7b7 !important;
+    }
+    body.dark .border-emerald-900\/10, body.dark .border-emerald-900\/15, body.dark .border-emerald-200\/70, body.dark .border-emerald-200\/80 {
+      border-color: #1e3a2f !important;
     }
     body.dark .bg-slate-50, body.dark .bg-slate-50\/60, body.dark .bg-slate-50\/80, body.dark .bg-slate-100 {
       background-color: #1e293b !important;
@@ -117,6 +234,10 @@
         <nav class="flex items-center bg-slate-100 p-1 rounded-xl">
           <button id="tabDashboardBtn" onclick="switchTab('dashboard')" class="px-5 py-2 text-sm font-semibold rounded-lg bg-slate-900 text-white transition-all shadow-sm">
             Dashboard
+          </button>
+          <button id="tabPlanBtn" onclick="switchTab('plan')" class="px-5 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5">
+            Plan
+            <span class="text-[9px] bg-indigo-100 text-indigo-700 px-1.5 py-0.2 rounded-full font-bold">New</span>
           </button>
           <button id="tabAnalyticsBtn" onclick="switchTab('analytics')" class="px-5 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5">
             Analytics
@@ -185,7 +306,7 @@
         <p class="text-xs text-slate-500" id="subHeadingText">Auto-calculated live from your trade logs & active holdings</p>
       </div>
 
-      <div class="flex items-center gap-2.5 flex-wrap">
+      <div id="globalSubBarActions" class="flex items-center gap-2.5 flex-wrap">
         <!-- Time Range Dropdown -->
         <div class="relative">
           <select id="timeFilter" onchange="handleTimeFilterChange()" class="appearance-none bg-white border border-slate-200 text-slate-700 text-xs font-semibold py-2.5 pl-3.5 pr-8 rounded-xl shadow-card focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
@@ -401,7 +522,7 @@
 
           <div class="flex items-center gap-2">
             <span id="roadmapTargetBadge" class="text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-50 text-slate-700 border border-slate-200">
-              Target: <b id="roadmapTargetText">₹1,00,000</b>
+              Next Tier: <b id="roadmapTargetText">₹1,00,000</b>
             </span>
             <button onclick="requireAdmin(openSettingsModal)" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition" title="Change Target Goal">
               <i data-lucide="sliders" class="w-4 h-4"></i>
@@ -409,20 +530,140 @@
           </div>
         </div>
 
-        <!-- Overall Master Progress Bar -->
-        <div class="bg-slate-50/80 border border-slate-100 rounded-xl p-4 mb-6 relative z-10">
-          <div class="flex items-center justify-between text-xs mb-2">
-            <div class="flex items-center gap-2 font-semibold text-slate-700">
-              <span>Overall Progress:</span>
-              <span id="roadmapOverallPct" class="text-indigo-600 font-bold text-sm">0%</span>
+        <!-- GOAL TILE GRID CARD (MILLIONLARK-STYLE ₹1,00,000 BANKNOTE) -->
+        <div class="bg-[#eef6f1] dark:bg-slate-900/70 border border-emerald-200/80 dark:border-slate-700/70 rounded-2xl p-4 sm:p-6 mb-6 relative z-10 transition-all">
+          <!-- Top Hero Header & Interactive Time Scrubber -->
+          <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
+            <div>
+              <div class="text-[11px] font-semibold text-emerald-900/70 dark:text-emerald-400/80 mb-0.5 flex items-center gap-2">
+                <span id="tileGridDateLabel">Today's portfolio value</span>
+                <span>•</span>
+                <span>1 tile = ₹100</span>
+              </div>
+              <div class="flex items-baseline gap-2.5 flex-wrap">
+                <span id="tileGridCurrentVal" class="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight">₹0</span>
+                <span id="tileGridProgressPct" class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-700 text-white shadow-xs">0.0%</span>
+              </div>
+              <p id="tileGridNextCheckpoint" class="text-xs text-slate-600 dark:text-slate-400 mt-1 font-medium">
+                Calculating ₹1,00,000 progress...
+              </p>
             </div>
-            <div class="text-slate-500 font-medium">
-              <span id="roadmapCurrentValText" class="font-bold text-slate-800">₹0</span> / <span id="roadmapGoalValText" class="font-bold text-indigo-700">₹1,00,000</span>
-              <span id="roadmapRemainingText" class="ml-2 text-xs text-slate-400">(₹1,00,000 to go)</span>
+
+            <!-- Millionlark-style Timeline Replay Control + Plan Link -->
+            <div class="flex flex-col sm:items-end gap-2 min-w-[230px]">
+              <div class="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                <button id="banknotePlayBtn" onclick="toggleBanknoteReplay()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0d221a] hover:bg-emerald-950 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-bold transition shadow-xs">
+                  <span id="banknotePlayIcon">▶</span>
+                  <span id="banknotePlayText">Play Journey</span>
+                </button>
+                <button onclick="resetBanknoteReplay()" id="banknoteResetBtn" class="hidden text-[11px] font-bold px-2.5 py-1.5 rounded-lg bg-white/80 dark:bg-slate-800 border border-emerald-900/15 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-white transition">
+                  Back to Today
+                </button>
+                <button onclick="switchTab('plan')" class="text-[11px] font-bold px-2.5 py-1.5 rounded-lg bg-white/80 dark:bg-slate-800 border border-emerald-900/15 dark:border-slate-700 text-emerald-900 dark:text-emerald-300 hover:bg-white transition flex items-center gap-1">
+                  <span>Plan</span>
+                  <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                </button>
+              </div>
+              <div class="w-full sm:w-64 flex flex-col gap-0.5">
+                <input type="range" id="banknoteTimelineSlider" min="0" max="100" value="35" oninput="handleBanknoteScrub(this.value)" class="w-full plan-slider text-emerald-700 dark:text-emerald-400 cursor-pointer" />
+                <div class="flex items-center justify-between text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+                  <span id="banknoteScrubStart">Start</span>
+                  <span id="banknoteScrubCurrent" class="text-emerald-800 dark:text-emerald-300 font-bold">Today</span>
+                  <span id="banknoteScrubEnd">Est. ₹1L</span>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden shadow-inner">
-            <div id="roadmapProgressBar" class="h-full bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-600 rounded-full transition-all duration-700 ease-out" style="width: 0%"></div>
+
+          <!-- BANKNOTE TILE FRAME (Landscape 40x25 Bill on Desktop, 25x40 Mobile) -->
+          <div class="relative pt-5">
+            <!-- Vertical Frontier Pill Badge (Desktop positioned at column %) -->
+            <div id="banknoteFrontierTag" class="hidden lg:flex items-center gap-1 absolute top-0 -translate-x-1/2 z-30 bg-[#0d221a] text-white text-[10px] font-extrabold px-2.5 py-0.5 rounded-md shadow-sm whitespace-nowrap transition-all duration-200 border border-amber-400/40" style="left: 16%;">
+              <span>Now: ₹16,069</span>
+            </div>
+
+            <div class="relative rounded-xl overflow-hidden border-[3px] border-double border-emerald-900/25 dark:border-emerald-500/25 bg-white dark:bg-slate-800/95 p-1.5 sm:p-2.5 shadow-sm">
+              <!-- Top Indian Currency Frame Ribbon (no tiles covered!) -->
+              <div class="hidden sm:flex items-center justify-between px-1 pb-1.5 mb-1.5 border-b border-emerald-900/10 dark:border-emerald-500/15 select-none relative z-30 bg-white/95 dark:bg-slate-800/95">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-black tracking-tight text-emerald-900 dark:text-emerald-300">₹१,००,०००</span>
+                  <span class="text-[10px] font-bold text-slate-600 dark:text-slate-300">एक लाख रुपये • ONE LAKH RUPEES</span>
+                </div>
+                <div id="banknoteSerialNumber" class="font-mono text-[10px] font-extrabold tracking-wider text-emerald-900 dark:text-emerald-300 bg-emerald-50/90 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-900/15 dark:border-emerald-500/25">
+                  OSR 26 • 037T
+                </div>
+              </div>
+
+              <!-- Inner Tile Grid Field with Security Thread & Watermarks -->
+              <div class="relative">
+                <!-- Indian Rupee Metallic Security Thread at Current Frontier -->
+                <div id="banknoteFrontierLine" class="hidden lg:block pointer-events-none absolute top-0 bottom-0 rupee-security-thread z-20 transition-all duration-200" style="left: 16%;"></div>
+
+                <!-- Indian Rupee Mandala + Central 1,00,000 Watermark Overlay -->
+                <div class="pointer-events-none select-none absolute inset-0 z-10 flex items-center justify-center overflow-hidden">
+                  <!-- Authentic Indian Lotus-Chakra Mandala Rosette + ₹ Window on Left -->
+                  <div class="absolute left-3 sm:left-10 w-36 h-36 sm:w-52 sm:h-52 flex items-center justify-center">
+                    <svg class="w-full h-full text-emerald-950/[0.11] dark:text-emerald-200/[0.10]" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="0.65">
+                      <circle cx="60" cy="60" r="56" stroke-dasharray="1.5 2"/>
+                      <circle cx="60" cy="60" r="49"/>
+                      <circle cx="60" cy="60" r="42" stroke-dasharray="3 1.5"/>
+                      <circle cx="60" cy="60" r="34"/>
+                      <circle cx="60" cy="60" r="24"/>
+                      <line x1="60" y1="12" x2="60" y2="108" stroke-width="0.45" opacity="0.5"/>
+                      <line x1="12" y1="60" x2="108" y2="60" stroke-width="0.45" opacity="0.5"/>
+                      <line x1="26" y1="26" x2="94" y2="94" stroke-width="0.45" opacity="0.5"/>
+                      <line x1="94" y1="26" x2="26" y2="94" stroke-width="0.45" opacity="0.5"/>
+                      <polygon points="60,10 69,48 110,60 69,72 60,110 51,72 10,60 51,48" stroke-width="0.55" opacity="0.6"/>
+                      <polygon points="25,25 60,46 95,25 74,60 95,95 60,74 25,95 46,60" stroke-width="0.45" opacity="0.45"/>
+                    </svg>
+                    <span class="absolute text-xl sm:text-2xl font-black text-emerald-950/20 dark:text-emerald-200/20">₹</span>
+                  </div>
+
+                  <!-- Giant ₹1,00,000 Center Currency Typography -->
+                  <div class="flex items-center gap-2 sm:gap-3">
+                    <span class="hidden sm:inline-flex items-center justify-center w-9 h-9 rounded-full bg-white/85 dark:bg-slate-900/85 text-emerald-900 dark:text-emerald-300 font-black text-sm shadow-sm border border-emerald-900/20">₹</span>
+                    <span class="text-4xl sm:text-6xl md:text-7xl font-black tracking-tighter text-white/95 dark:text-slate-100/85 banknote-bill-text">1,00,000</span>
+                  </div>
+                </div>
+
+                <!-- The 1,000 Tiles Grid -->
+                <div id="tileGridContainer" class="relative z-0 w-full grid grid-cols-25 lg:grid-flow-col lg:grid-rows-25 lg:grid-cols-40 gap-[1.5px] sm:gap-[2px]">
+                  <!-- Dynamically populated by JS: 1000 tiles -->
+                </div>
+              </div>
+
+              <!-- Bottom Indian Currency Frame Ribbon -->
+              <div class="hidden sm:flex items-center justify-between px-1 pt-1.5 mt-1.5 border-t border-emerald-900/10 dark:border-emerald-500/15 select-none text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                <span class="tracking-widest uppercase">QISAR RESEARCH • 1,000 TILES (₹100 EACH)</span>
+                <span class="text-xs font-black text-emerald-900 dark:text-emerald-300">₹1,00,000</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 10-Step Milestone Ruler (₹10k to ₹1L with Real + Projected Dates) -->
+          <div id="banknoteRuler" class="hidden sm:grid grid-cols-10 gap-1 mt-2.5 pt-2 border-t border-emerald-900/10 dark:border-slate-700/60 text-center">
+            <!-- Populated by JS -->
+          </div>
+
+          <!-- Compact Legend Footer -->
+          <div class="flex flex-wrap items-center justify-between gap-3 mt-3 pt-2.5 border-t border-emerald-900/10 dark:border-slate-700/60 text-[11px] text-slate-600 dark:text-slate-300">
+            <div class="flex flex-wrap items-center gap-4">
+              <span class="flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-[2px] bg-emerald-600 shrink-0"></span>
+                <span>Covered Base: <b id="legendGreenTiles" class="font-bold text-slate-900 dark:text-white">0</b></span>
+              </span>
+              <span class="flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-[2px] bg-amber-500 shrink-0"></span>
+                <span>Gained (Last 12M): <b id="legendOrangeTiles" class="font-bold text-slate-900 dark:text-white">0</b></span>
+              </span>
+              <span class="flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-[2px] border border-slate-300 dark:border-slate-600 shrink-0 tile-hatched-legend"></span>
+                <span class="text-slate-500 dark:text-slate-400">Remaining: <b id="legendRemainingTiles" class="font-bold">1,000</b></span>
+              </span>
+              <span class="text-slate-400 hidden sm:inline">•</span>
+              <span id="tileGridFilledCount" class="font-bold text-slate-700 dark:text-slate-200">0 <span class="font-normal text-slate-500">/ 1,000 tiles</span></span>
+            </div>
+            <span id="tileGridRemainingText" class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">₹1,00,000 remaining • Hover any tile</span>
           </div>
         </div>
 
@@ -594,6 +835,156 @@
       </section>
 
     </main>
+
+    <!-- ================= PAGE: PLAN VIEW (MILLIONLARK-STYLE MONTE CARLO COCKPIT) ================= -->
+    <section id="planView" class="hidden">
+      <div class="bg-[#eef6f1] dark:bg-slate-900/60 border border-emerald-200/70 dark:border-slate-800 rounded-2xl p-4 sm:p-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+          <!-- LEFT 8 COLS: HEADLINE + FAN CHART + WHAT MOVES THE DATE -->
+          <div class="lg:col-span-8 flex flex-col gap-5">
+            <!-- Hero Arrival Date & 3-Way Mood Toggle (stays cleanly top-right on desktop) -->
+            <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="text-xs font-semibold text-emerald-800/70 dark:text-emerald-400/80">Est. ₹1,00,000 arrival, if the plan holds</p>
+                <h2 id="planMedianHeadlineDate" class="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight mt-0.5">Calculating...</h2>
+                <p id="planRangeHeadlineText" class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1.5 font-medium max-w-xl">8 out of 10 simulations land between ... and ...</p>
+              </div>
+
+              <!-- 3-Way Segmented Toggle -->
+              <div class="inline-flex shrink-0 self-start bg-white/85 dark:bg-slate-800 p-1 rounded-xl border border-emerald-900/10 dark:border-slate-700 shadow-xs select-none" id="planMoodToggle">
+                <button onclick="setPlanMood('harder')" data-mood="harder" class="px-3 py-1.5 text-xs font-bold rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 transition whitespace-nowrap">If harder</button>
+                <button onclick="setPlanMood('planned')" data-mood="planned" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-[#0d221a] text-white shadow-xs transition whitespace-nowrap">As planned</button>
+                <button onclick="setPlanMood('better')" data-mood="better" class="px-3 py-1.5 text-xs font-bold rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 transition whitespace-nowrap">If better</button>
+              </div>
+            </div>
+
+            <!-- Fan Chart Card -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-5 border border-emerald-900/10 dark:border-slate-700 shadow-card">
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-3 text-[11px] text-slate-500 dark:text-slate-400 select-none">
+                <div class="flex items-center gap-3.5 flex-wrap">
+                  <span class="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200"><span class="w-3.5 h-0.5 bg-slate-800 dark:bg-slate-300 rounded"></span> Past Equity</span>
+                  <span class="flex items-center gap-1.5 font-semibold text-emerald-700 dark:text-emerald-400"><span class="w-3.5 h-0.5 bg-emerald-600 rounded"></span> This estimate</span>
+                  <span class="flex items-center gap-1.5"><span class="w-3 h-2.5 bg-emerald-500/25 rounded-xs"></span> 5 runs in 10</span>
+                  <span class="flex items-center gap-1.5"><span class="w-3 h-2.5 bg-emerald-500/12 border border-emerald-500/20 rounded-xs"></span> 8 runs in 10</span>
+                  <span class="flex items-center gap-1.5 font-semibold text-amber-700 dark:text-amber-400"><span class="w-3.5 h-0.5 border-t-2 border-dashed border-amber-500"></span> Target ₹1L</span>
+                </div>
+                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">1,000 runs</span>
+              </div>
+
+              <div class="relative w-full h-[300px] sm:h-[340px]">
+                <canvas id="planFanChartCanvas"></canvas>
+              </div>
+            </div>
+
+            <!-- Bottom 2 Cards: What Moves the Date + Keep Going / Milestones -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- What Moves the Estimated Date -->
+              <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-5 border border-emerald-900/10 dark:border-slate-700 shadow-card">
+                <h3 class="text-sm font-extrabold text-slate-900 dark:text-white mb-2.5">What moves the estimated date</h3>
+                <div class="flex flex-col divide-y divide-slate-100 dark:divide-slate-700/70" id="planSensitivityGrid">
+                  <!-- Populated by JS -->
+                </div>
+              </div>
+
+              <!-- Keep Going Past ₹1L & Milestones -->
+              <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-5 border border-emerald-900/10 dark:border-slate-700 shadow-card flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-2.5">
+                    <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">Milestones & Beyond</h3>
+                    <span class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full">If you keep going</span>
+                  </div>
+                  <div class="space-y-2 text-xs" id="planCheckpointsList">
+                    <!-- Populated by JS -->
+                  </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-slate-700">
+                  <div class="bg-slate-50 dark:bg-slate-900/60 rounded-xl p-2">
+                    <span class="text-[10px] font-semibold text-slate-400 block">2Y Hit Odds</span>
+                    <span id="planTwoYearOdds" class="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400">--%</span>
+                  </div>
+                  <div class="bg-slate-50 dark:bg-slate-900/60 rounded-xl p-2">
+                    <span class="text-[10px] font-semibold text-slate-400 block">Median DD</span>
+                    <span id="planMedianDrawdown" class="text-sm sm:text-base font-black text-rose-600 dark:text-rose-400">--%</span>
+                  </div>
+                  <div class="bg-slate-50 dark:bg-slate-900/60 rounded-xl p-2">
+                    <span class="text-[10px] font-semibold text-slate-400 block">Est. at 3Y</span>
+                    <span id="planThreeYearWealth" class="text-sm sm:text-base font-black text-slate-900 dark:text-white">--</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT 4 COLS: DARK FOREST "YOUR PLAN" SIDEBAR -->
+          <div class="lg:col-span-4 bg-[#0d221a] dark:bg-slate-900 text-white rounded-2xl p-5 sm:p-6 shadow-card border border-emerald-900/50 flex flex-col justify-between select-none lg:sticky lg:top-6">
+            <div>
+              <div class="flex items-center justify-between mb-5 pb-3 border-b border-white/10">
+                <h3 class="text-lg font-black tracking-tight text-white">Your plan</h3>
+                <button onclick="resetPlanSliders()" class="text-xs font-bold text-emerald-300 hover:text-emerald-200 transition">Reset</button>
+              </div>
+
+              <!-- Slider 1: Trades each month -->
+              <div class="mb-4">
+                <div class="flex items-center justify-between text-xs font-semibold mb-1.5">
+                  <label for="planSliderTradesPerMonth" class="text-slate-200">Trades each month</label>
+                  <span id="planValTradesPerMonth" class="font-black text-white text-sm">10 trades</span>
+                </div>
+                <input type="range" id="planSliderTradesPerMonth" min="2" max="40" step="1" value="10" oninput="handlePlanSliderChange()" class="w-full plan-slider text-emerald-400 cursor-pointer" />
+                <p class="text-[10px] text-emerald-200/60 mt-1">Compounding frequency from your trading cadence.</p>
+              </div>
+
+              <!-- Slider 2: Risk per trade -->
+              <div class="mb-4">
+                <div class="flex items-center justify-between text-xs font-semibold mb-1.5">
+                  <label for="planSliderRiskPct" class="text-slate-200">Risk per trade</label>
+                  <span id="planValRiskPct" class="font-black text-white text-sm">2.00%</span>
+                </div>
+                <input type="range" id="planSliderRiskPct" min="0.5" max="5.0" step="0.25" value="2.0" oninput="handlePlanSliderChange()" class="w-full plan-slider text-emerald-400 cursor-pointer" />
+                <p class="text-[10px] text-emerald-200/60 mt-1">Capital risked per position (scales win & drawdown size).</p>
+              </div>
+
+              <!-- Slider 3: Put aside each month -->
+              <div class="mb-4">
+                <div class="flex items-center justify-between text-xs font-semibold mb-1.5">
+                  <label for="planSliderDeposit" class="text-slate-200">Put aside each month</label>
+                  <span id="planValDeposit" class="font-black text-emerald-300 text-sm">+₹0</span>
+                </div>
+                <input type="range" id="planSliderDeposit" min="0" max="25000" step="500" value="0" oninput="handlePlanSliderChange()" class="w-full plan-slider text-emerald-400 cursor-pointer" />
+                <p class="text-[10px] text-emerald-200/60 mt-1">Fresh capital added on top of your trading profits.</p>
+              </div>
+
+              <!-- Slider 4: Withdraw each month -->
+              <div class="mb-4">
+                <div class="flex items-center justify-between text-xs font-semibold mb-1.5">
+                  <label for="planSliderWithdrawal" class="text-slate-200">Withdraw each month</label>
+                  <span id="planValWithdrawal" class="font-black text-rose-300 text-sm">-₹0</span>
+                </div>
+                <input type="range" id="planSliderWithdrawal" min="0" max="20000" step="500" value="0" oninput="handlePlanSliderChange()" class="w-full plan-slider text-rose-400 cursor-pointer" />
+                <p class="text-[10px] text-emerald-200/60 mt-1">Monthly profit extraction before compounding.</p>
+              </div>
+
+              <!-- Collapsible All Assumptions Drawer (Actual Trade Stats) -->
+              <div class="pt-3 mt-1 border-t border-white/10">
+                <button onclick="togglePlanAssumptions()" class="w-full flex items-center justify-between text-xs font-bold text-emerald-200 hover:text-white transition py-1">
+                  <span>All assumptions (from your trades)</span>
+                  <span id="planAssumptionsChevron" class="text-sm font-mono">+</span>
+                </button>
+                <div id="planAssumptionsDrawer" class="hidden mt-2.5 bg-black/25 rounded-xl p-3 text-[11px] space-y-1.5 text-emerald-100/80 border border-white/5">
+                  <!-- Populated by JS -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer Disclaimer inside Sidebar -->
+            <div class="pt-4 mt-3 border-t border-white/10 text-[11px] leading-relaxed text-emerald-100/60">
+              Each run resamples your actual past trades (including drawdowns). Estimates based on past trades, not a forecast or financial advice.
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
 
     <!-- ================= PAGE 2: ANALYTICS VIEW ================= -->
     <section id="analyticsView" class="hidden flex flex-col gap-6">
@@ -2016,18 +2407,24 @@
     function initTheme() {
       const savedTheme = localStorage.getItem('tj_theme') || 'light';
       if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
         document.body.classList.add('dark');
       } else {
+        document.documentElement.classList.remove('dark');
         document.body.classList.remove('dark');
       }
       updateThemeUI();
     }
 
     function toggleDarkMode() {
-      document.body.classList.toggle('dark');
-      const isDark = document.body.classList.contains('dark');
-      localStorage.setItem('tj_theme', isDark ? 'dark' : 'light');
+      const willBeDark = !document.body.classList.contains('dark');
+      document.documentElement.classList.toggle('dark', willBeDark);
+      document.body.classList.toggle('dark', willBeDark);
+      localStorage.setItem('tj_theme', willBeDark ? 'dark' : 'light');
       updateThemeUI();
+      if (state.activeTab === 'plan') {
+        runMonteCarloSimulation();
+      }
     }
 
     function updateThemeUI() {
@@ -2655,9 +3052,11 @@
     function switchTab(tab) {
       state.activeTab = tab;
       const dashboardView = document.getElementById('dashboardView');
+      const planView = document.getElementById('planView');
       const analyticsView = document.getElementById('analyticsView');
       const tradeDataView = document.getElementById('tradeDataView');
       const tabDashboardBtn = document.getElementById('tabDashboardBtn');
+      const tabPlanBtn = document.getElementById('tabPlanBtn');
       const tabAnalyticsBtn = document.getElementById('tabAnalyticsBtn');
       const tabTradeDataBtn = document.getElementById('tabTradeDataBtn');
       const pageHeading = document.getElementById('pageHeading');
@@ -2667,12 +3066,20 @@
       const inactiveClass = "px-5 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5";
 
       dashboardView.classList.add('hidden');
+      if (planView) planView.classList.add('hidden');
       if (analyticsView) analyticsView.classList.add('hidden');
       tradeDataView.classList.add('hidden');
 
       tabDashboardBtn.className = inactiveClass;
+      if (tabPlanBtn) tabPlanBtn.className = inactiveClass;
       if (tabAnalyticsBtn) tabAnalyticsBtn.className = inactiveClass;
       tabTradeDataBtn.className = inactiveClass;
+
+      const subBarActions = document.getElementById('globalSubBarActions');
+      if (subBarActions) {
+        if (tab === 'plan') subBarActions.classList.add('hidden');
+        else subBarActions.classList.remove('hidden');
+      }
 
       if (tab === 'dashboard') {
         dashboardView.classList.remove('hidden');
@@ -2680,6 +3087,12 @@
         pageHeading.innerText = "Trading Overview (INR)";
         if (subHeadingText) subHeadingText.innerText = "Auto-calculated live from your trade logs & active holdings";
         recalculateAndRenderAll();
+      } else if (tab === 'plan') {
+        if (planView) planView.classList.remove('hidden');
+        if (tabPlanBtn) tabPlanBtn.className = activeClass;
+        pageHeading.innerText = "Milestone Projection & Strategy Plan";
+        if (subHeadingText) subHeadingText.innerText = "Monte Carlo simulation based on your historical trades with dynamic sensitivity modeling";
+        runMonteCarloSimulation();
       } else if (tab === 'analytics') {
         if (analyticsView) analyticsView.classList.remove('hidden');
         if (tabAnalyticsBtn) tabAnalyticsBtn.className = activeClass;
@@ -3527,6 +3940,10 @@
         remainingEl.innerText = remainingAmt <= 0 ? '(Target Achieved! 🎉)' : `(${formatINR(remainingAmt)} to go)`;
       }
 
+      // Render Goal Tile Grid (1,000 Tiles | 1 Tile = ₹100) + Banknote Replay Timeline
+      window.banknoteLatestSnapshot = { portfolioValue, closedTrades, initialCapital };
+      renderBanknoteTileGrid(portfolioValue, closedTrades, initialCapital, null);
+
       // 4 Milestone Tiers
       const t1 = Math.round(targetMilestone * 0.25);
       const t2 = Math.round(targetMilestone * 0.50);
@@ -3654,19 +4071,19 @@
         }
       }
 
-      // 2. Compounding Formula: N = ln(Target / Current) / ln(1 + r)
+      // 2. Compounding Formula: N = ln(Target / Current) / ln(1 + r) targeting actual ₹1,00,000 Goal
       const estDateEl = document.getElementById('roadmapEstimatedDate');
       const estSubEl = document.getElementById('roadmapEstimatedSubtext');
       if (estDateEl) {
-        if (portfolioValue >= targetMilestone) {
+        const target1L = 100000;
+        if (portfolioValue >= target1L) {
           estDateEl.innerText = 'Achieved! 🏆';
           estDateEl.className = 'text-sm font-bold text-emerald-600 truncate';
           if (estSubEl) estSubEl.innerText = 'Milestone Reached';
         } else {
           const P = Math.max(1000, portfolioValue);
-          const T = targetMilestone;
           const r = effectiveMonthlyRate;
-          const monthsNeeded = Math.ceil(Math.log(T / P) / Math.log(1 + r));
+          const monthsNeeded = Math.max(1, Math.ceil(Math.log(target1L / P) / Math.log(1 + r)));
 
           const arrivalDate = new Date();
           arrivalDate.setMonth(arrivalDate.getMonth() + monthsNeeded);
@@ -3674,7 +4091,7 @@
           const arrivalStr = `${monthNames[arrivalDate.getMonth()]} ${arrivalDate.getFullYear()}`;
 
           estDateEl.innerText = `${arrivalStr} (~${monthsNeeded}m)`;
-          estDateEl.className = 'text-sm font-bold text-slate-800 truncate';
+          estDateEl.className = 'text-sm font-bold text-slate-800 dark:text-slate-200 truncate';
           if (estSubEl) estSubEl.innerText = `At ${(effectiveMonthlyRate * 100).toFixed(1)}% compounding pace`;
         }
       }
@@ -5777,6 +6194,950 @@
         recalculateAndRenderAll();
         renderTradesTable();
         showToast('ℹ️ Local data refreshed (Offline mode)');
+      }
+    }
+
+    // ================= MONTE CARLO SIMULATION & STRATEGY PLAN ENGINE =================
+    let planFanChartInstance = null;
+
+    function resetPlanSliders() {
+      const sTrades = document.getElementById('planSliderTradesPerMonth');
+      const sRisk = document.getElementById('planSliderRiskPct');
+      const sDep = document.getElementById('planSliderDeposit');
+      const sWith = document.getElementById('planSliderWithdrawal');
+      if (sTrades) sTrades.value = 10;
+      if (sRisk) sRisk.value = 2.0;
+      if (sDep) sDep.value = 0;
+      if (sWith) sWith.value = 0;
+      handlePlanSliderChange();
+    }
+
+    function handlePlanSliderChange() {
+      const sTrades = document.getElementById('planSliderTradesPerMonth');
+      const sRisk = document.getElementById('planSliderRiskPct');
+      const sDep = document.getElementById('planSliderDeposit');
+      const sWith = document.getElementById('planSliderWithdrawal');
+
+      const valTrades = sTrades ? parseInt(sTrades.value, 10) : 10;
+      const valRisk = sRisk ? parseFloat(sRisk.value) : 2.0;
+      const valDep = sDep ? parseInt(sDep.value, 10) : 0;
+      const valWith = sWith ? parseInt(sWith.value, 10) : 0;
+
+      const badgeTrades = document.getElementById('planValTradesPerMonth');
+      const badgeRisk = document.getElementById('planValRiskPct');
+      const badgeDep = document.getElementById('planValDeposit');
+      const badgeWith = document.getElementById('planValWithdrawal');
+
+      if (badgeTrades) badgeTrades.innerText = `${valTrades} trades`;
+      if (badgeRisk) badgeRisk.innerText = `${valRisk.toFixed(2)}%`;
+      if (badgeDep) badgeDep.innerText = `+${formatINR(valDep)}`;
+      if (badgeWith) badgeWith.innerText = `-${formatINR(valWith)}`;
+
+      runMonteCarloSimulation();
+      if (window.banknoteLatestSnapshot) {
+        const s = window.banknoteLatestSnapshot;
+        renderBanknoteTileGrid(s.portfolioValue, s.closedTrades, s.initialCapital, null);
+      }
+    }
+
+    let banknoteReplayTimer = null;
+
+    function computeMonteCarloCore(portfolioValue, closedTrades = [], initialCapital = 10000, opts = {}) {
+      const tPerMonth = opts.tradesPerMonth ?? 10;
+      const risk = opts.riskPct ?? 2.0;
+      const dep = opts.deposit ?? 0;
+      const withdr = opts.withdrawal ?? 0;
+      const mood = opts.mood ?? 'planned';
+      const runs = opts.runs ?? 1000;
+      const horizonMonths = opts.horizonMonths ?? 36;
+      const targetVal = 100000;
+
+      const losses = closedTrades.filter(t => (t.pnl || 0) < 0);
+      const avgLoss = losses.length > 0 ? (losses.reduce((sum, t) => sum + Math.abs(t.pnl || 0), 0) / losses.length) : (initialCapital * 0.05);
+      const rMultipliers = closedTrades.length >= 3
+        ? closedTrades.map(t => (t.pnl || 0) / (avgLoss || 500))
+        : [1.5, -1.0, 2.0, -1.0, 1.2, -0.8, 2.5, -1.2, 1.0, -0.5];
+
+      const rand = mulberry32(421000);
+      const edgeShift = mood === 'harder' ? -0.15 : (mood === 'better' ? 0.15 : 0);
+      const trajectories = [];
+      const crossingMonths = [];
+      const maxDrawdowns = [];
+      const q25Months = [];
+      const q50Months = [];
+
+      for (let r = 0; r < runs; r++) {
+        let cap = portfolioValue;
+        let peak = portfolioValue;
+        let maxDd = 0;
+        const path = [cap];
+        let crossedMonth = null;
+        let c25 = portfolioValue >= 25000 ? 0 : null;
+        let c50 = portfolioValue >= 50000 ? 0 : null;
+
+        for (let m = 1; m <= horizonMonths; m++) {
+          for (let t = 0; t < tPerMonth; t++) {
+            const randR = rMultipliers[Math.floor(rand() * rMultipliers.length)] + edgeShift;
+            const tradePnl = cap * (risk / 100) * randR;
+            cap = Math.max(500, cap + tradePnl);
+            if (cap > peak) peak = cap;
+            const dd = peak > 0 ? ((peak - cap) / peak) * 100 : 0;
+            if (dd > maxDd) maxDd = dd;
+          }
+          cap = Math.max(500, cap + dep - withdr);
+          if (cap > peak) peak = cap;
+          path.push(cap);
+
+          if (cap >= 25000 && c25 === null) c25 = m;
+          if (cap >= 50000 && c50 === null) c50 = m;
+          if (cap >= targetVal && crossedMonth === null) crossedMonth = m;
+        }
+        trajectories.push(path);
+        crossingMonths.push(crossedMonth !== null ? crossedMonth : horizonMonths + 1);
+        q25Months.push(c25 !== null ? c25 : horizonMonths + 1);
+        q50Months.push(c50 !== null ? c50 : horizonMonths + 1);
+        maxDrawdowns.push(maxDd);
+      }
+
+      crossingMonths.sort((a, b) => a - b);
+      q25Months.sort((a, b) => a - b);
+      q50Months.sort((a, b) => a - b);
+      maxDrawdowns.sort((a, b) => a - b);
+
+      const p50Arr = [];
+      for (let m = 0; m <= horizonMonths; m++) {
+        const vals = trajectories.map(traj => traj[m]).sort((a, b) => a - b);
+        p50Arr.push(Math.round(vals[Math.floor(runs * 0.50)]));
+      }
+
+      return {
+        rMultipliers,
+        trajectories,
+        crossingMonths,
+        p50Arr,
+        p50Cross: crossingMonths[Math.floor(runs * 0.50)],
+        p50Q25: q25Months[Math.floor(runs * 0.50)],
+        p50Q50: q50Months[Math.floor(runs * 0.50)],
+        medianDrawdown: maxDrawdowns[Math.floor(runs * 0.50)]
+      };
+    }
+
+    function buildBanknoteTimelineFrames(currentPortfolioVal, closedTrades = [], initialCapital = 10000) {
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const sorted = [...closedTrades].sort((a, b) => new Date(a.exitDate || a.date) - new Date(b.exitDate || b.date));
+      const frames = [];
+
+      // Group real cumulative equity by YYYY-MM
+      const monthMap = new Map();
+      let running = initialCapital;
+      const logs = [...(state.capitalLogs || [])].sort((a, b) => new Date(a.date) - new Date(b.date));
+      const events = [
+        ...sorted.map(t => ({ date: t.exitDate || t.date, delta: t.pnl || 0 })),
+        ...logs.map(c => ({ date: c.date, delta: c.type === 'DEPOSIT' ? (parseFloat(c.amount) || 0) : -(parseFloat(c.amount) || 0) }))
+      ].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      events.forEach(ev => {
+        if (!ev.date) return;
+        const d = new Date(ev.date);
+        if (isNaN(d)) return;
+        running += ev.delta;
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        monthMap.set(key, Math.max(500, running));
+      });
+
+      const entries = Array.from(monthMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+      entries.forEach(([key, val]) => {
+        const [yr, mo] = key.split('-');
+        frames.push({ label: `${monthNames[parseInt(mo, 10) - 1]} ${yr}`, val, isProjection: false });
+      });
+
+      const now = new Date();
+      const nowLabel = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+      if (frames.length === 0) {
+        frames.push({ label: nowLabel, val: currentPortfolioVal, isProjection: false });
+      } else {
+        frames[frames.length - 1] = { label: nowLabel, val: currentPortfolioVal, isProjection: false };
+      }
+
+      const todayIdx = frames.length - 1;
+
+      // Sync forward trajectory cleanly with current Plan Monte Carlo median path!
+      const sTrades = document.getElementById('planSliderTradesPerMonth');
+      const sRisk = document.getElementById('planSliderRiskPct');
+      const sDep = document.getElementById('planSliderDeposit');
+      const sWith = document.getElementById('planSliderWithdrawal');
+      const mc = computeMonteCarloCore(currentPortfolioVal, closedTrades, initialCapital, {
+        tradesPerMonth: sTrades ? parseInt(sTrades.value, 10) : 10,
+        riskPct: sRisk ? parseFloat(sRisk.value) : 2.0,
+        deposit: sDep ? parseInt(sDep.value, 10) : 0,
+        withdrawal: sWith ? parseInt(sWith.value, 10) : 0,
+        mood: typeof planMood !== 'undefined' ? planMood : 'planned',
+        runs: 400,
+        horizonMonths: 36
+      });
+
+      for (let m = 1; m < mc.p50Arr.length; m++) {
+        const valM = Math.min(100000, mc.p50Arr[m]);
+        const d = new Date(now.getFullYear(), now.getMonth() + m, 1);
+        frames.push({ label: `${monthNames[d.getMonth()]} ${d.getFullYear()}`, val: valM, isProjection: true });
+        if (valM >= 100000) break;
+      }
+
+      return { frames, todayIdx };
+    }
+
+    function renderBanknoteTileGrid(portfolioValue, closedTrades = [], initialCapital = 10000, overrideIdx = null) {
+      const targetGoalVal = 100000;
+      const { frames, todayIdx } = buildBanknoteTimelineFrames(portfolioValue, closedTrades, initialCapital);
+      window.banknoteTimelineFrames = frames;
+      window.banknoteTodayIdx = todayIdx;
+
+      const activeIdx = overrideIdx !== null ? Math.min(frames.length - 1, Math.max(0, overrideIdx)) : todayIdx;
+      const activeFrame = frames[activeIdx] || { label: 'Today', val: portfolioValue, isProjection: false };
+      const displayVal = activeFrame.val;
+
+      // Sync slider range
+      const scrubSlider = document.getElementById('banknoteTimelineSlider');
+      if (scrubSlider) {
+        scrubSlider.max = Math.max(0, frames.length - 1);
+        if (overrideIdx === null) scrubSlider.value = todayIdx;
+      }
+      const scrubStart = document.getElementById('banknoteScrubStart');
+      const scrubCurr = document.getElementById('banknoteScrubCurrent');
+      const scrubEnd = document.getElementById('banknoteScrubEnd');
+      if (scrubStart && frames.length > 0) scrubStart.innerText = frames[0].label;
+      if (scrubCurr) scrubCurr.innerText = activeIdx === todayIdx ? `Today (${activeFrame.label})` : (activeFrame.isProjection ? `Est. ${activeFrame.label}` : activeFrame.label);
+      if (scrubEnd && frames.length > 0) scrubEnd.innerText = `Est. ${frames[frames.length - 1].label}`;
+
+      const resetBtn = document.getElementById('banknoteResetBtn');
+      if (resetBtn) {
+        if (activeIdx !== todayIdx) resetBtn.classList.remove('hidden');
+        else resetBtn.classList.add('hidden');
+      }
+
+      const dateLabelEl = document.getElementById('tileGridDateLabel');
+      if (dateLabelEl) {
+        dateLabelEl.innerText = activeIdx === todayIdx
+          ? `Today's portfolio value (${activeFrame.label})`
+          : (activeFrame.isProjection ? `Projected portfolio (${activeFrame.label})` : `Historical snapshot (${activeFrame.label})`);
+      }
+
+      const totalFilledTiles = Math.min(1000, Math.max(0, Math.floor(displayVal / 100)));
+      const now = new Date();
+      const twelveMonthsAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+      const tradesL12M = closedTrades.filter(t => {
+        const d = new Date(t.exitDate || t.date);
+        return !isNaN(d) && d >= twelveMonthsAgo;
+      });
+      const gainL12M = tradesL12M.reduce((sum, t) => sum + (t.pnl || 0), 0);
+      const holdingGain = (state.trades || []).filter(t => t.isHolding || t.status === 'HOLDING').reduce((sum, t) => sum + (t.pnl || 0), 0);
+      const totalL12MGain = Math.max(0, gainL12M + holdingGain);
+      const orangeTiles = Math.min(totalFilledTiles, Math.max(0, Math.round(totalL12MGain / 100)));
+      const greenTiles = Math.max(0, totalFilledTiles - orangeTiles);
+      const remainingTiles = Math.max(0, 1000 - totalFilledTiles);
+
+      const tileGridContainer = document.getElementById('tileGridContainer');
+      if (tileGridContainer) {
+        let tilesHtml = '';
+        for (let i = 0; i < 1000; i++) {
+          let bgClass = '';
+          let statusLabel = '';
+          const isFrontier = (i === totalFilledTiles - 1 && totalFilledTiles > 0 && totalFilledTiles < 1000);
+          if (i < greenTiles) {
+            bgClass = 'bg-emerald-600/90 dark:bg-emerald-500';
+            statusLabel = 'Base Capital Covered';
+          } else if (i < totalFilledTiles) {
+            bgClass = 'bg-amber-500';
+            statusLabel = activeFrame.isProjection ? 'Projected Growth Path' : 'Gained in Last 12 Months';
+          } else if (i < totalFilledTiles + 120) {
+            bgClass = 'tile-projected-shade border border-slate-200/70 dark:border-slate-700/40';
+            statusLabel = 'Near-Term Horizon';
+          } else {
+            bgClass = 'tile-hatched border border-slate-200/60 dark:border-slate-700/40';
+            statusLabel = 'Remaining to ₹1 Lakh';
+          }
+          const val = (i + 1) * 100;
+          tilesHtml += `<div class="banknote-tile-cell rounded-[1.5px] ${bgClass} ${isFrontier ? 'tile-frontier ring-1 ring-amber-300' : ''} transition-transform hover:scale-125 hover:z-20" title="Tile #${i + 1}: ₹${val.toLocaleString('en-IN')} (${statusLabel})"></div>`;
+        }
+        tileGridContainer.innerHTML = tilesHtml;
+      }
+
+      // Update dynamic Banknote Serial Number (OSR <YR> • <TRADES>T • <TILES>/1000)
+      const serialEl = document.getElementById('banknoteSerialNumber');
+      if (serialEl) {
+        const yr = String(new Date().getFullYear()).slice(-2);
+        const trPad = String(closedTrades.length).padStart(3, '0');
+        const tlPad = String(totalFilledTiles).padStart(4, '0');
+        serialEl.innerText = `OSR ${yr} • ${trPad}T • ${tlPad}`;
+      }
+
+      // Position frontier security thread & badge horizontally across 40 columns
+      const pctLeft = Math.min(97, Math.max(3, (totalFilledTiles / 1000) * 100));
+      const frontierTag = document.getElementById('banknoteFrontierTag');
+      const frontierLine = document.getElementById('banknoteFrontierLine');
+      const indianFrontierVal = `₹${Math.round(displayVal).toLocaleString('en-IN')}`;
+      if (frontierTag) {
+        frontierTag.style.left = `${pctLeft}%`;
+        frontierTag.innerHTML = `<span>${activeIdx === todayIdx ? 'Now' : activeFrame.label}: ${indianFrontierVal}</span>`;
+      }
+      if (frontierLine) {
+        frontierLine.style.left = `${pctLeft}%`;
+      }
+
+      // Build 10-step ruler with strict en-IN ₹10,000 - ₹1,00,000 formatting & projected dates
+      const banknoteRuler = document.getElementById('banknoteRuler');
+      if (banknoteRuler) {
+        let rulerHtml = '';
+        for (let step = 1; step <= 10; step++) {
+          const amt = step * 10000;
+          const label = `₹${amt.toLocaleString('en-IN')}`;
+          const unlocked = displayVal >= amt;
+          const hitFrame = frames.find(f => f.val >= amt);
+          const dateHint = hitFrame ? (hitFrame.isProjection ? `Est. ${hitFrame.label}` : hitFrame.label) : `${step * 100} tiles`;
+          rulerHtml += `
+            <div class="flex flex-col items-center">
+              <span class="text-[10px] lg:text-[11px] font-extrabold ${unlocked ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-400'}">${label}</span>
+              <span class="text-[9px] font-semibold ${unlocked ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}">${unlocked ? dateHint + ' ✓' : dateHint}</span>
+            </div>
+          `;
+        }
+        banknoteRuler.innerHTML = rulerHtml;
+      }
+
+      const nextCheckpointEl = document.getElementById('tileGridNextCheckpoint');
+      if (nextCheckpointEl) {
+        const pctStr = ((displayVal / targetGoalVal) * 100).toFixed(1);
+        const estArrivalLabel = frames.length > 0 ? frames[frames.length - 1].label : '';
+        const quarters = [25000, 50000, 75000, 100000];
+        const nextQ = quarters.find(q => displayVal < q);
+        if (!nextQ) {
+          nextCheckpointEl.innerHTML = `🏆 100.0% — All 1,000 tiles unlocked (${activeFrame.label})!`;
+        } else {
+          const tilesNeeded = Math.max(1, Math.ceil((nextQ - displayVal) / 100));
+          nextCheckpointEl.innerHTML = `Est. arrival <b>${estArrivalLabel}</b> • ${pctStr}% of the way • <b>${tilesNeeded} tiles</b> to ${formatINR(nextQ)}`;
+        }
+      }
+
+      const gridPctEl = document.getElementById('tileGridProgressPct');
+      if (gridPctEl) gridPctEl.innerText = `${((displayVal / targetGoalVal) * 100).toFixed(1)}%`;
+      const gridCurValEl = document.getElementById('tileGridCurrentVal');
+      if (gridCurValEl) gridCurValEl.innerText = formatINR(displayVal);
+      const gridFilledEl = document.getElementById('tileGridFilledCount');
+      if (gridFilledEl) gridFilledEl.innerHTML = `${totalFilledTiles} <span class="font-normal text-slate-500">/ 1,000 tiles</span>`;
+      const gridRemEl = document.getElementById('tileGridRemainingText');
+      if (gridRemEl) gridRemEl.innerText = `${formatINR(Math.max(0, targetGoalVal - displayVal))} remaining`;
+
+      const legGreen = document.getElementById('legendGreenTiles');
+      if (legGreen) legGreen.innerText = greenTiles;
+      const legOrange = document.getElementById('legendOrangeTiles');
+      if (legOrange) legOrange.innerText = orangeTiles;
+      const legRem = document.getElementById('legendRemainingTiles');
+      if (legRem) legRem.innerText = remainingTiles;
+    }
+
+    function handleBanknoteScrub(idxVal) {
+      const snap = window.banknoteLatestSnapshot;
+      if (!snap) return;
+      renderBanknoteTileGrid(snap.portfolioValue, snap.closedTrades, snap.initialCapital, parseInt(idxVal, 10));
+    }
+
+    function resetBanknoteReplay() {
+      if (banknoteReplayTimer) {
+        clearInterval(banknoteReplayTimer);
+        banknoteReplayTimer = null;
+      }
+      const playIcon = document.getElementById('banknotePlayIcon');
+      const playText = document.getElementById('banknotePlayText');
+      if (playIcon) playIcon.innerText = '▶';
+      if (playText) playText.innerText = 'Play Journey';
+
+      const snap = window.banknoteLatestSnapshot;
+      if (snap) renderBanknoteTileGrid(snap.portfolioValue, snap.closedTrades, snap.initialCapital, null);
+    }
+
+    function toggleBanknoteReplay() {
+      const playIcon = document.getElementById('banknotePlayIcon');
+      const playText = document.getElementById('banknotePlayText');
+      if (banknoteReplayTimer) {
+        clearInterval(banknoteReplayTimer);
+        banknoteReplayTimer = null;
+        if (playIcon) playIcon.innerText = '▶';
+        if (playText) playText.innerText = 'Play Journey';
+        return;
+      }
+
+      const frames = window.banknoteTimelineFrames || [];
+      if (frames.length <= 1) return;
+      const slider = document.getElementById('banknoteTimelineSlider');
+      let idx = 0;
+      if (playIcon) playIcon.innerText = '⏸';
+      if (playText) playText.innerText = 'Pause';
+
+      const snap = window.banknoteLatestSnapshot;
+      banknoteReplayTimer = setInterval(() => {
+        if (slider) slider.value = idx;
+        if (snap) renderBanknoteTileGrid(snap.portfolioValue, snap.closedTrades, snap.initialCapital, idx);
+        idx++;
+        if (idx >= frames.length) {
+          clearInterval(banknoteReplayTimer);
+          banknoteReplayTimer = null;
+          if (playIcon) playIcon.innerText = '▶';
+          if (playText) playText.innerText = 'Replay';
+        }
+      }, 220);
+    }
+
+    function togglePlanAssumptions() {
+      const drawer = document.getElementById('planAssumptionsDrawer');
+      const chev = document.getElementById('planAssumptionsChevron');
+      if (!drawer) return;
+      const hidden = drawer.classList.toggle('hidden');
+      if (chev) chev.innerText = hidden ? '+' : '−';
+    }
+
+    let planMood = 'planned'; // 'harder' | 'planned' | 'better'
+
+    function setPlanMood(mood) {
+      planMood = mood;
+      const buttons = document.querySelectorAll('#planMoodToggle button');
+      buttons.forEach(btn => {
+        if (btn.dataset.mood === mood) {
+          btn.className = 'px-3 py-1.5 text-xs font-bold rounded-lg bg-[#0d221a] text-white shadow-xs transition';
+        } else {
+          btn.className = 'px-3 py-1.5 text-xs font-bold rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 transition';
+        }
+      });
+      runMonteCarloSimulation();
+    }
+
+    function applySensitivityAction(type) {
+      const sTrades = document.getElementById('planSliderTradesPerMonth');
+      const sRisk = document.getElementById('planSliderRiskPct');
+      const sDep = document.getElementById('planSliderDeposit');
+      const sWith = document.getElementById('planSliderWithdrawal');
+      if (!sTrades || !sRisk || !sDep || !sWith) return;
+
+      if (type === 'deposit') {
+        sDep.value = Math.min(25000, parseInt(sDep.value, 10) + 2000);
+      } else if (type === 'risk') {
+        sRisk.value = Math.max(0.5, parseFloat(sRisk.value) * 0.5).toFixed(2);
+      } else if (type === 'trades') {
+        sTrades.value = Math.min(40, parseInt(sTrades.value, 10) + 5);
+      } else if (type === 'withdraw') {
+        sWith.value = Math.max(0, parseInt(sWith.value, 10) - 1000);
+      }
+      handlePlanSliderChange();
+    }
+
+    function mulberry32(seed) {
+      let a = seed >>> 0;
+      return function() {
+        a |= 0; a = (a + 0x6D2B79F5) | 0;
+        let t = Math.imul(a ^ (a >>> 15), 1 | a);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    function runMonteCarloSimulation() {
+      const closedTrades = (state.trades || []).filter(t => !t.isHolding && t.status !== 'HOLDING');
+      const initialCapital = state.settings.initialCapital || 10000;
+      
+      const totalDeposited = (state.capitalLogs || []).filter(c => c.type === 'DEPOSIT').reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
+      const totalWithdrawn = (state.capitalLogs || []).filter(c => c.type === 'WITHDRAWAL').reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
+      const netBaseCapital = initialCapital + (totalDeposited - totalWithdrawn);
+      const totalCombinedPnl = (state.trades || []).reduce((acc, t) => acc + (t.pnl || 0), 0);
+      const currentPortfolioVal = Math.max(1000, netBaseCapital + totalCombinedPnl);
+
+      const losses = closedTrades.filter(t => (t.pnl || 0) < 0);
+      const avgLoss = losses.length > 0 ? (losses.reduce((sum, t) => sum + Math.abs(t.pnl || 0), 0) / losses.length) : (initialCapital * 0.05);
+
+      let rMultipliers = [];
+      if (closedTrades.length >= 3) {
+        rMultipliers = closedTrades.map(t => (t.pnl || 0) / (avgLoss || 500));
+      } else {
+        rMultipliers = [1.5, -1.0, 2.0, -1.0, 1.2, -0.8, 2.5, -1.2, 1.0, -0.5];
+      }
+
+      const sTrades = document.getElementById('planSliderTradesPerMonth');
+      const sRisk = document.getElementById('planSliderRiskPct');
+      const sDep = document.getElementById('planSliderDeposit');
+      const sWith = document.getElementById('planSliderWithdrawal');
+
+      const tradesPerMonth = sTrades ? parseInt(sTrades.value, 10) : 10;
+      const riskPct = sRisk ? parseFloat(sRisk.value) : 2.0;
+      const monthlyDeposit = sDep ? parseInt(sDep.value, 10) : 0;
+      const monthlyWithdrawal = sWith ? parseInt(sWith.value, 10) : 0;
+
+      const runs = 1000;
+      const horizonMonths = 36;
+      const targetVal = 100000;
+
+      function simulatePaths(initCap, tPerMonth, risk, dep, withdr) {
+        const rand = mulberry32(421000);
+        const edgeShift = planMood === 'harder' ? -0.15 : (planMood === 'better' ? 0.15 : 0);
+        const trajectories = [];
+        const crossingMonths = [];
+        const maxDrawdowns = [];
+        const q25Months = [];
+        const q50Months = [];
+
+        for (let r = 0; r < runs; r++) {
+          let cap = initCap;
+          let peak = initCap;
+          let maxDd = 0;
+          const path = [cap];
+          let crossedMonth = null;
+          let c25 = initCap >= 25000 ? 0 : null;
+          let c50 = initCap >= 50000 ? 0 : null;
+
+          for (let m = 1; m <= horizonMonths; m++) {
+            for (let t = 0; t < tPerMonth; t++) {
+              const randR = rMultipliers[Math.floor(rand() * rMultipliers.length)] + edgeShift;
+              const tradePnl = cap * (risk / 100) * randR;
+              cap = Math.max(500, cap + tradePnl);
+              if (cap > peak) peak = cap;
+              const dd = peak > 0 ? ((peak - cap) / peak) * 100 : 0;
+              if (dd > maxDd) maxDd = dd;
+            }
+            cap = Math.max(500, cap + dep - withdr);
+            if (cap > peak) peak = cap;
+            path.push(cap);
+
+            if (cap >= 25000 && c25 === null) c25 = m;
+            if (cap >= 50000 && c50 === null) c50 = m;
+            if (cap >= targetVal && crossedMonth === null) {
+              crossedMonth = m;
+            }
+          }
+          trajectories.push(path);
+          crossingMonths.push(crossedMonth !== null ? crossedMonth : horizonMonths + 1);
+          q25Months.push(c25 !== null ? c25 : horizonMonths + 1);
+          q50Months.push(c50 !== null ? c50 : horizonMonths + 1);
+          maxDrawdowns.push(maxDd);
+        }
+
+        crossingMonths.sort((a, b) => a - b);
+        q25Months.sort((a, b) => a - b);
+        q50Months.sort((a, b) => a - b);
+        maxDrawdowns.sort((a, b) => a - b);
+        return {
+          trajectories,
+          crossingMonths,
+          p50Q25: q25Months[Math.floor(runs * 0.50)],
+          p50Q50: q50Months[Math.floor(runs * 0.50)],
+          medianDrawdown: maxDrawdowns[Math.floor(runs * 0.50)]
+        };
+      }
+
+      const baseResult = simulatePaths(currentPortfolioVal, tradesPerMonth, riskPct, monthlyDeposit, monthlyWithdrawal);
+      const crossMonths = baseResult.crossingMonths;
+      const p10Cross = crossMonths[Math.floor(runs * 0.10)];
+      const p50Cross = crossMonths[Math.floor(runs * 0.50)];
+      const p90Cross = crossMonths[Math.floor(runs * 0.90)];
+
+      const twoYearHits = crossMonths.filter(m => m <= 24).length;
+      const twoYearPct = ((twoYearHits / runs) * 100).toFixed(0);
+      const oddsEl = document.getElementById('planTwoYearOdds');
+      if (oddsEl) oddsEl.innerText = `${twoYearPct}%`;
+      const ddEl = document.getElementById('planMedianDrawdown');
+      if (ddEl) ddEl.innerText = `-${baseResult.medianDrawdown.toFixed(1)}%`;
+
+      const p10Arr = [];
+      const p25Arr = [];
+      const p50Arr = [];
+      const p75Arr = [];
+      const p90Arr = [];
+
+      for (let m = 0; m <= horizonMonths; m++) {
+        const valsAtM = baseResult.trajectories.map(traj => traj[m]).sort((a, b) => a - b);
+        p10Arr.push(Math.round(valsAtM[Math.floor(runs * 0.10)]));
+        p25Arr.push(Math.round(valsAtM[Math.floor(runs * 0.25)]));
+        p50Arr.push(Math.round(valsAtM[Math.floor(runs * 0.50)]));
+        p75Arr.push(Math.round(valsAtM[Math.floor(runs * 0.75)]));
+        p90Arr.push(Math.round(valsAtM[Math.floor(runs * 0.90)]));
+      }
+
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const now = new Date();
+
+      function formatMonthFromNow(mOffset) {
+        if (mOffset > horizonMonths) return `> 3 Years`;
+        const d = new Date(now.getFullYear(), now.getMonth() + mOffset, 1);
+        return `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+      }
+
+      const headlineMedianEl = document.getElementById('planMedianHeadlineDate');
+      if (headlineMedianEl) {
+        if (currentPortfolioVal >= targetVal) {
+          headlineMedianEl.innerText = `Goal Achieved! 🏆`;
+        } else if (p50Cross <= horizonMonths) {
+          headlineMedianEl.innerText = `${formatMonthFromNow(p50Cross)}`;
+        } else {
+          headlineMedianEl.innerText = `> 36 Months`;
+        }
+      }
+
+      const headlineRangeEl = document.getElementById('planRangeHeadlineText');
+      if (headlineRangeEl) {
+        if (currentPortfolioVal >= targetVal) {
+          headlineRangeEl.innerText = `Current portfolio exceeds ₹1,00,000 target.`;
+        } else {
+          const d10Str = formatMonthFromNow(p10Cross);
+          const d90Str = formatMonthFromNow(p90Cross);
+          headlineRangeEl.innerText = `${p50Cross <= horizonMonths ? '~' + p50Cross + ' months from now' : 'Beyond 3 years'}. In 8 of 10 simulations, the estimated date is between ${d10Str} and ${d90Str}.`;
+        }
+      }
+
+      const checkpointsEl = document.getElementById('planCheckpointsList');
+      if (checkpointsEl) {
+        const formatCp = (m, label, amt) => {
+          const done = currentPortfolioVal >= amt;
+          return `
+            <div class="flex items-center justify-between py-1">
+              <span class="font-semibold text-slate-600 dark:text-slate-300">${label}</span>
+              <span class="font-extrabold ${done ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}">
+                ${done ? 'Reached ✓' : (m <= horizonMonths ? formatMonthFromNow(m) + ' (' + m + 'm)' : '> 3 Years')}
+              </span>
+            </div>
+          `;
+        };
+        checkpointsEl.innerHTML =
+          formatCp(baseResult.p50Q25, '₹25,000 (250 tiles)', 25000) +
+          formatCp(baseResult.p50Q50, '₹50,000 (500 tiles)', 50000) +
+          formatCp(p50Cross, '₹1,00,000 (1,000 tiles)', 100000);
+      }
+
+      const threeYrEl = document.getElementById('planThreeYearWealth');
+      if (threeYrEl && p50Arr.length > 0) {
+        const endVal = p50Arr[p50Arr.length - 1];
+        threeYrEl.innerText = endVal >= 100000 ? `₹${(endVal / 100000).toFixed(2)}L` : formatINR(endVal);
+      }
+
+      // Update All Assumptions Drawer inside Dark Sidebar
+      const assumptionsDrawer = document.getElementById('planAssumptionsDrawer');
+      if (assumptionsDrawer) {
+        const winsCount = closedTrades.filter(t => (t.pnl || 0) > 0).length;
+        const winRateStr = closedTrades.length > 0 ? ((winsCount / closedTrades.length) * 100).toFixed(1) + '%' : 'N/A';
+        const avgR = rMultipliers.length > 0 ? (rMultipliers.reduce((a, b) => a + b, 0) / rMultipliers.length).toFixed(2) : '0.00';
+        const worstR = rMultipliers.length > 0 ? Math.min(...rMultipliers).toFixed(2) : '-1.00';
+        assumptionsDrawer.innerHTML = `
+          <div class="flex justify-between"><span>Sample Size:</span><b class="text-white">${closedTrades.length} real closed trades</b></div>
+          <div class="flex justify-between"><span>Historical Win Rate:</span><b class="text-white">${winRateStr}</b></div>
+          <div class="flex justify-between"><span>Mean Expectancy:</span><b class="text-emerald-300">+${avgR} R / trade</b></div>
+          <div class="flex justify-between"><span>Worst Trade Resampled:</span><b class="text-rose-300">${worstR} R</b></div>
+          <div class="flex justify-between"><span>Starting Equity Base:</span><b class="text-white">${formatINR(currentPortfolioVal)}</b></div>
+          <div class="flex justify-between"><span>Scenario Mode:</span><b class="text-amber-300 capitalize">${planMood === 'planned' ? 'As planned (Actual)' : (planMood === 'better' ? 'If better (+0.15R)' : 'If harder (-0.15R)')}</b></div>
+        `;
+      }
+
+      // Build Historical Equity Lead-in (last 6 months up to Now)
+      const histPoints = [];
+      const sortedTrades = [...closedTrades].sort((a, b) => new Date(a.exitDate || a.date) - new Date(b.exitDate || b.date));
+      const histMonthMap = new Map();
+      let hRunning = initialCapital;
+      const hLogs = [...(state.capitalLogs || [])].sort((a, b) => new Date(a.date) - new Date(b.date));
+      const hEvents = [
+        ...sortedTrades.map(t => ({ date: t.exitDate || t.date, delta: t.pnl || 0 })),
+        ...hLogs.map(c => ({ date: c.date, delta: c.type === 'DEPOSIT' ? (parseFloat(c.amount) || 0) : -(parseFloat(c.amount) || 0) }))
+      ].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      hEvents.forEach(ev => {
+        if (!ev.date) return;
+        const d = new Date(ev.date);
+        if (isNaN(d)) return;
+        hRunning += ev.delta;
+        const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        histMonthMap.set(k, Math.max(500, hRunning));
+      });
+      const histEntries = Array.from(histMonthMap.entries()).sort((a, b) => a[0].localeCompare(b[0])).slice(-4);
+      // Exclude current month if already at tail so "Now" bridges seamlessly
+      const curKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const pastOnly = histEntries.filter(([k]) => k < curKey).slice(-3);
+
+      const histLabels = pastOnly.map(([k]) => {
+        const [y, m] = k.split('-');
+        return `${monthNames[parseInt(m, 10) - 1]} '${y.slice(-2)}`;
+      });
+      const pastLen = histLabels.length;
+
+      // Fan Chart Render (Historical Lead-in + Future Monte Carlo Fan)
+      const futureLabels = [];
+      for (let m = 0; m <= horizonMonths; m += 3) {
+        const d = new Date(now.getFullYear(), now.getMonth() + m, 1);
+        futureLabels.push(m === 0 ? 'Now' : `${monthNames[d.getMonth()]} '${String(d.getFullYear()).slice(-2)}`);
+      }
+      const labels = [...histLabels, ...futureLabels];
+      const step = 3;
+      const padPast = (arr) => [...new Array(pastLen).fill(null), ...arr];
+      const sampledP10 = padPast(p10Arr.filter((_, idx) => idx % step === 0));
+      const sampledP25 = padPast(p25Arr.filter((_, idx) => idx % step === 0));
+      const sampledP50 = padPast(p50Arr.filter((_, idx) => idx % step === 0));
+      const sampledP75 = padPast(p75Arr.filter((_, idx) => idx % step === 0));
+      const sampledP90 = padPast(p90Arr.filter((_, idx) => idx % step === 0));
+      const sampledHist = [...pastOnly.map(([, v]) => Math.round(v)), Math.round(currentPortfolioVal), ...new Array(futureLabels.length - 1).fill(null)];
+      const sampledTarget = new Array(labels.length).fill(targetVal);
+
+      // Compute crossing index on chart labels (interpolated) for Millionlark crossing pin + drop line
+      let crossingLabelIdx = null;
+      let crossingDateStr = '';
+      if (p50Cross <= horizonMonths && currentPortfolioVal < targetVal) {
+        crossingLabelIdx = pastLen + (p50Cross / step);
+        crossingDateStr = `est. ${formatMonthFromNow(p50Cross)}`;
+      }
+
+      // Compute balanced Y-axis ceiling so ₹1,00,000 line sits prominently in view (not squished)
+      const p50FutureArr = p50Arr.filter((_, idx) => idx % step === 0);
+      const p90FutureArr = p90Arr.filter((_, idx) => idx % step === 0);
+      const crossFutureIdx = Math.min(p90FutureArr.length - 1, Math.ceil((p50Cross <= horizonMonths ? p50Cross : 24) / step));
+      const focusVal = Math.max(150000, (p90FutureArr[crossFutureIdx] || 180000) * 1.15, (p50FutureArr[crossFutureIdx] || 100000) * 1.45);
+      const yCeiling = Math.min(350000, Math.ceil(focusVal / 50000) * 50000);
+
+      function formatCompactINR(v) {
+        if (v === 0) return '₹0';
+        if (v >= 100000) {
+          const l = v / 100000;
+          return `₹${Number.isInteger(l) ? l : l.toFixed(1)} Lakh`;
+        }
+        return `₹${Math.round(v).toLocaleString('en-IN')}`;
+      }
+
+      // Inline plugin for target crossing pin + vertical dashed drop-line + "₹1L" badge
+      const crossingPlugin = {
+        id: 'planCrossingPin',
+        afterDatasetsDraw(chart) {
+          const { ctx: c, scales: { x, y } } = chart;
+          if (!x || !y) return;
+          const isDark = document.body.classList.contains('dark');
+          const targetY = y.getPixelForValue(targetVal);
+          c.save();
+
+          // Left-edge "₹1L Goal" tag (positioned in open headroom away from right curve)
+          if (targetY >= y.top && targetY <= y.bottom) {
+            c.font = 'bold 10px Inter, sans-serif';
+            c.fillStyle = isDark ? '#fbbf24' : '#b45309';
+            c.textAlign = 'left';
+            c.fillText('₹1L Goal', x.left + 8, targetY - 6);
+          }
+
+          if (crossingLabelIdx !== null) {
+            const pinX = x.getPixelForValue(crossingLabelIdx);
+            const pinY = targetY;
+            if (pinX >= x.left && pinX <= x.right && pinY >= y.top && pinY <= y.bottom) {
+              // Vertical dashed drop line down to x-axis
+              c.beginPath();
+              c.setLineDash([4, 4]);
+              c.strokeStyle = isDark ? 'rgba(226, 232, 240, 0.45)' : 'rgba(15, 23, 42, 0.4)';
+              c.lineWidth = 1.25;
+              c.moveTo(pinX, pinY);
+              c.lineTo(pinX, y.bottom);
+              c.stroke();
+              c.setLineDash([]);
+
+              // Amber circle + white ring at intersection
+              c.beginPath();
+              c.arc(pinX, pinY, 5.5, 0, Math.PI * 2);
+              c.fillStyle = '#f59e0b';
+              c.fill();
+              c.lineWidth = 2;
+              c.strokeStyle = '#ffffff';
+              c.stroke();
+
+              // Crisp dark pill above x-axis
+              c.font = 'bold 10px Inter, sans-serif';
+              const textW = c.measureText(crossingDateStr).width;
+              const pillW = textW + 12;
+              const pillX = Math.min(x.right - pillW - 2, Math.max(x.left + 2, pinX - pillW / 2));
+              const pillY = y.bottom - 22;
+              c.fillStyle = '#0d221a';
+              c.beginPath();
+              if (c.roundRect) c.roundRect(pillX, pillY, pillW, 18, 5);
+              else c.rect(pillX, pillY, pillW, 18);
+              c.fill();
+              c.fillStyle = '#ffffff';
+              c.textAlign = 'center';
+              c.fillText(crossingDateStr, pillX + pillW / 2, pillY + 12.5);
+            }
+          }
+          c.restore();
+        }
+      };
+
+      const canvas = document.getElementById('planFanChartCanvas');
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        if (planFanChartInstance) planFanChartInstance.destroy();
+
+        planFanChartInstance = new Chart(ctx, {
+          type: 'line',
+          plugins: [crossingPlugin],
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: 'Goal Target (₹1 Lakh)',
+                data: sampledTarget,
+                borderColor: '#f59e0b',
+                borderWidth: 2,
+                borderDash: [6, 5],
+                pointRadius: 0,
+                fill: false
+              },
+              {
+                label: 'Past Equity History',
+                data: sampledHist,
+                borderColor: '#334155',
+                borderWidth: 2.2,
+                pointRadius: 2.5,
+                pointBackgroundColor: '#334155',
+                fill: false,
+                tension: 0.2
+              },
+              {
+                label: '90th Percentile (Bullish Path)',
+                data: sampledP90,
+                borderColor: 'transparent',
+                pointRadius: 0,
+                fill: false
+              },
+              {
+                label: '10th-90th Percentile Band (8 runs in 10)',
+                data: sampledP10,
+                borderColor: 'transparent',
+                pointRadius: 0,
+                fill: '-1',
+                backgroundColor: 'rgba(5, 150, 105, 0.13)'
+              },
+              {
+                label: '75th Percentile',
+                data: sampledP75,
+                borderColor: 'transparent',
+                pointRadius: 0,
+                fill: false
+              },
+              {
+                label: '25th-75th Percentile Band (5 runs in 10)',
+                data: sampledP25,
+                borderColor: 'transparent',
+                pointRadius: 0,
+                fill: '-1',
+                backgroundColor: 'rgba(5, 150, 105, 0.25)'
+              },
+              {
+                label: 'This Estimate (Median)',
+                data: sampledP50,
+                borderColor: '#059669',
+                borderWidth: 2.8,
+                pointRadius: 2.8,
+                pointBackgroundColor: '#059669',
+                fill: false,
+                tension: 0.25
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+              legend: { display: false },
+              datalabels: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(ctx) {
+                    if (ctx.raw === null || ctx.raw === undefined) return null;
+                    if (ctx.dataset.borderColor === 'transparent' && ctx.dataset.label.includes('Percentile Band')) {
+                      return null;
+                    }
+                    return ` ${ctx.dataset.label}: ${formatINR(ctx.raw)}`;
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: { color: '#64748b', font: { size: 10, weight: '600' } }
+              },
+              y: {
+                min: 0,
+                suggestedMax: yCeiling,
+                grid: { color: 'rgba(148, 163, 184, 0.18)' },
+                ticks: {
+                  callback: (v) => formatCompactINR(v),
+                  color: '#64748b',
+                  font: { size: 10, weight: '600' }
+                }
+              }
+            }
+          }
+        });
+      }
+
+      // Sensitivity scenarios
+      const resDep = simulatePaths(currentPortfolioVal, tradesPerMonth, riskPct, monthlyDeposit + 2000, monthlyWithdrawal);
+      const p50Dep = resDep.crossingMonths[Math.floor(runs * 0.50)];
+      const diffDep = p50Cross - p50Dep;
+
+      const targetHalfRisk = Math.max(0.5, riskPct * 0.5);
+      const resRisk = simulatePaths(currentPortfolioVal, tradesPerMonth, targetHalfRisk, monthlyDeposit, monthlyWithdrawal);
+      const p50Risk = resRisk.crossingMonths[Math.floor(runs * 0.50)];
+      const diffRisk = p50Risk - p50Cross;
+
+      const resTrades = simulatePaths(currentPortfolioVal, tradesPerMonth + 5, riskPct, monthlyDeposit, monthlyWithdrawal);
+      const p50Trades = resTrades.crossingMonths[Math.floor(runs * 0.50)];
+      const diffTrades = p50Cross - p50Trades;
+
+      const resWith = simulatePaths(currentPortfolioVal, tradesPerMonth, riskPct, monthlyDeposit, monthlyWithdrawal + 1000);
+      const p50With = resWith.crossingMonths[Math.floor(runs * 0.50)];
+      const diffWith = p50With - p50Cross;
+
+      const sensGrid = document.getElementById('planSensitivityGrid');
+      if (sensGrid) {
+        sensGrid.innerHTML = `
+          <div class="flex items-center justify-between gap-2 py-2.5 text-xs">
+            <span class="font-medium text-slate-700 dark:text-slate-300">Add ₹2,000 each month</span>
+            <div class="flex items-center gap-2.5 shrink-0">
+              <span class="font-extrabold ${diffDep > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}">
+                ${diffDep > 0 ? `${diffDep} months sooner` : (diffDep < 0 ? `${Math.abs(diffDep)}m later` : 'Same')}
+              </span>
+              <button onclick="applySensitivityAction('deposit')" class="px-2 py-1 rounded-md bg-slate-100 hover:bg-emerald-100 dark:bg-slate-700 dark:hover:bg-emerald-900/50 text-[11px] font-bold text-slate-700 dark:text-slate-200 transition">Take it</button>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between gap-2 py-2.5 text-xs">
+            <span class="font-medium text-slate-700 dark:text-slate-300">Risk ${targetHalfRisk.toFixed(1)}% instead of ${riskPct}%</span>
+            <div class="flex items-center gap-2.5 shrink-0">
+              <span class="font-extrabold ${diffRisk > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600'}">
+                ${diffRisk > 0 ? `${diffRisk} months later` : (diffRisk < 0 ? `${Math.abs(diffRisk)}m sooner` : 'Steady')}
+              </span>
+              <button onclick="applySensitivityAction('risk')" class="px-2 py-1 rounded-md bg-slate-100 hover:bg-amber-100 dark:bg-slate-700 dark:hover:bg-amber-900/50 text-[11px] font-bold text-slate-700 dark:text-slate-200 transition">Take it</button>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between gap-2 py-2.5 text-xs">
+            <span class="font-medium text-slate-700 dark:text-slate-300">Take +5 trades each month</span>
+            <div class="flex items-center gap-2.5 shrink-0">
+              <span class="font-extrabold ${diffTrades > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}">
+                ${diffTrades > 0 ? `${diffTrades} months sooner` : (diffTrades < 0 ? `${Math.abs(diffTrades)}m later` : 'Minimal')}
+              </span>
+              <button onclick="applySensitivityAction('trades')" class="px-2 py-1 rounded-md bg-slate-100 hover:bg-emerald-100 dark:bg-slate-700 dark:hover:bg-emerald-900/50 text-[11px] font-bold text-slate-700 dark:text-slate-200 transition">Take it</button>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between gap-2 py-2.5 text-xs">
+            <span class="font-medium text-slate-700 dark:text-slate-300">Withdraw +₹1,000 each month</span>
+            <div class="flex items-center gap-2.5 shrink-0">
+              <span class="font-extrabold ${diffWith > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500'}">
+                ${diffWith > 0 ? `${diffWith} months later` : 'Minimal'}
+              </span>
+            </div>
+          </div>
+        `;
+      }
+
+      if (typeof lucide !== 'undefined' && lucide.createIcons) {
+        lucide.createIcons();
       }
     }
 
